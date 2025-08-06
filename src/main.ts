@@ -1,9 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import * as dotenv from 'dotenv';
-
-dotenv.config();
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { rawBody: true });
@@ -20,11 +17,20 @@ async function bootstrap() {
   SwaggerModule.setup('docs', app, document);
 
   app.enableCors({
-    origin: process.env.FRONTEND_URL,
+    origin: (origin: string, callback: (...args: any[]) => void) => {
+      if (
+        !origin ||
+        /^https?:\/\/([a-z0-9-]+\.)*dsandy\.shop$/.test(origin) ||
+        /http:\/\/localhost:\d+/.test(origin)
+      ) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
-
   await app.listen(process.env.PORT ?? 3001);
 }
 
