@@ -1,12 +1,17 @@
-import { Module } from '@nestjs/common';
-import { AdminService } from './service/admin.service';
-import { ScraperService } from './service/scraper.service';
-import { AdminController } from './controller/admin.controller';
+import { Global, Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProductsModule } from 'src/products/products.module';
 
+import { AdminController } from './controllers/admin.controller';
+import { Subdomain } from './entities/subdomain.entity';
+import { Tenant } from './entities/tenant.entity';
+import { AdminService } from './services/admin.service';
+
+@Global()
 @Module({
-  imports: [ProductsModule],
+  imports: [TypeOrmModule.forFeature([Subdomain, Tenant]), ProductsModule],
+  providers: [AdminService],
   controllers: [AdminController],
-  providers: [AdminService, ScraperService],
+  exports: [AdminService],
 })
 export class AdminModule {}

@@ -1,12 +1,13 @@
-// This is the Products module, mirroring the Admin module structure
 import { Module } from '@nestjs/common';
-import { ProductsController } from './controller/products.controller';
-import { ProductsService } from './service/products.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Product } from './entities/product.entity';
+import { AliexpressModule } from 'src/aliexpress/aliexpress.module';
+
+import { ProductsController } from './controllers/products.controller';
+import { DProduct } from './entities/dynamic-product.entity';
+import { ProductsService } from './services/products.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Product])],
+  imports: [AliexpressModule, TypeOrmModule.forFeature([DProduct])],
   controllers: [ProductsController],
   providers: [ProductsService],
   exports: [ProductsService],

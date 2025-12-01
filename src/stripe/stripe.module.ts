@@ -1,25 +1,26 @@
-// stripe.module.ts
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { OrdersModule } from 'src/orders/orders.module';
+import { TelegramModule } from 'src/telegram/telegram.module';
 import Stripe from 'stripe';
-import { StripeService } from './service/stripe.service';
+
 import { StripeController } from './controller/stripe.controller';
+import { StripeService } from './service/stripe.service';
 
 @Module({
-  imports: [ConfigModule],
+  imports: [ConfigModule, OrdersModule, TelegramModule],
   controllers: [StripeController],
   providers: [
     StripeService,
     {
+      inject: [ConfigService],
       provide: 'STRIPE_CLIENT',
-      useFactory: (configService: ConfigService) => {
-        return new Stripe(configService.get('STRIPE_SECRET_KEY')!, {
+      useFactory: (config: ConfigService) => {
+        return new Stripe(config.get('STRIPE_SECRET_KEY')!, {
           apiVersion: '2025-07-30.basil',
         });
       },
-      inject: [ConfigService],
     },
   ],
-  exports: [StripeService],
 })
 export class StripeModule {}

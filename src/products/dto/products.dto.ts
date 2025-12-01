@@ -1,29 +1,37 @@
-import { SubdomainEnum } from 'lib/types';
-import * as ProductJson from './product-json.namespace';
-import { SupplierEnum } from 'src/admin/dto/scraper-service.dto';
-
-export class ProductCreateDto {
-  subdomain: SubdomainEnum;
-  supplier: SupplierEnum;
-  scrapeUid: string;
-
-  aliProductId: number;
-  inStock: boolean;
-
-  title: string;
-  category: string;
-  description: string;
-  descriptionHtml: string;
-  gallery: ProductJson.GalleryItem[];
-  specifications: ProductJson.Specification[];
-
-  variants: ProductJson.Variant[];
-  variantsSize: ProductJson.VariantSize[];
-
-  feedbackInfo: ProductJson.FeedbackInfo;
-  deliveryInfo: ProductJson.DeliveryInfo;
+export class ProductSCU {
+  aliScuId: string;
+  propertyId: number;
+  propertyName: string;
+  propertyValueId: number;
+  propertyValueName: string;
+  availableStock: number;
+  priceInfo: {
+    currency: string;
+    price: string;
+    offerPrice: string;
+    offerBulkPrice: string;
+    dsPrice: number;
+    dsOfferPrice: number;
+  };
+  image: string;
 }
 
-export class ProductsGetQueryDto {
-  subdomain: SubdomainEnum;
+export class Product {
+  id: number;
+  aliProductId: number;
+  subdomainName: string;
+  name: string;
+  logistics: {
+    deliveryTime: number;
+    shipTo: string;
+  };
+  feedback: {
+    reviewsCount: number;
+    salesCount: string;
+    rating: number;
+  };
+  images: string[];
+  specifications: [string, string][];
+  descriptionHtml: string;
+  scus: ProductSCU[];
 }
