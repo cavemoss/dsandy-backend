@@ -24,7 +24,7 @@ export class SubdomainMiddleware implements NestMiddleware {
       subdomainName = process.env.DEV_SUBDOMAIN;
     } else {
       const ptr = hostname.split('.');
-      subdomainName = ptr.length === 2 ? ptr[0] : '';
+      subdomainName = ptr.length === 3 ? ptr[0] : '';
     }
 
     if (!subdomainName) {
