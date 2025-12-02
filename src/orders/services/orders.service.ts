@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import dayjs from 'dayjs';
+import * as dayjs from 'dayjs';
 import { AliexpressService } from 'src/aliexpress/services/aliexpress.service';
 import { ProductsService } from 'src/products/services/products.service';
 import { Repository } from 'typeorm';
