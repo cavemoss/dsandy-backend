@@ -36,6 +36,7 @@ export class AdminService {
 
     const tenant = this.tenantsRepo.create({
       email: dto.email,
+      name: dto.name,
       password: dto.password,
       subdomains: [subdomain],
     });
