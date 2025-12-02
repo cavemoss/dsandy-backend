@@ -17,10 +17,8 @@ export class SubdomainMiddleware implements NestMiddleware {
   ) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
-    const hostname = (req.headers.host ?? req.hostname).split(':')[0];
+    const { hostname } = new URL(req.headers.origin!);
     let subdomainName: string;
-
-    console.log(req);
 
     if (['localhost', '127.0.0.1'].includes(hostname)) {
       subdomainName = process.env.DEV_SUBDOMAIN;
