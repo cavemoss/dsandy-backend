@@ -17,7 +17,13 @@ export class SubdomainMiddleware implements NestMiddleware {
   ) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
-    const { hostname } = new URL(req.headers.origin!);
+    const { origin } = req.headers;
+
+    if (!origin) {
+      throw new HttpException('No origin in headers', HttpStatus.BAD_REQUEST);
+    }
+
+    const { hostname } = new URL(origin);
     let subdomainName: string;
 
     if (['localhost', '127.0.0.1'].includes(hostname)) {

@@ -66,7 +66,7 @@ export class AdminService {
       return await this.subdomainsRepo.findOneByOrFail({ name });
     } catch (error) {
       console.debug(error);
-      throw new HttpException('Unknown subdomain', HttpStatus.BAD_REQUEST);
+      throw new HttpException(`Unknown subdomain ${name}`, HttpStatus.BAD_REQUEST);
     }
   }
 
