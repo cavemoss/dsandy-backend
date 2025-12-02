@@ -64,7 +64,9 @@ export class OrdersService {
       .filter(order => dayjs(order.createdAt).add(20, 'minutes').isBefore(now))
       .map(order => order.id);
 
-    await this.ordersRepo.delete(orderIds);
+    if (orderIds.length) {
+      await this.ordersRepo.delete(orderIds);
+    }
   }
 
   async placeOrderAtAliexpress(orderId: number) {
