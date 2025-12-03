@@ -17,5 +17,5 @@ jobs:
           script: |
             cd ~/dsandy/backend
             git pull
-            cd ..
+            cd ~/dsandy
             docker-compose up -d --build backend
