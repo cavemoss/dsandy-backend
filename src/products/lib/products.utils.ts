@@ -35,7 +35,8 @@ export const mapAliProduct = (
         sku_image: image,
       } = dto.ae_sku_property_dtos.ae_sku_property_d_t_o[0];
 
-      let dcPrice: number;
+      const dsPrice = +(parseFloat(dto.sku_price) * config.priceMult).toFixed(2);
+      const dsOfferPrice = +(dsPrice * config.discountMult).toFixed(2);
 
       return {
         id: idx + 1,
@@ -51,9 +52,8 @@ export const mapAliProduct = (
           price: dto.sku_price,
           offerPrice: dto.offer_sale_price,
           offerBulkPrice: dto.offer_bulk_sale_price,
-
-          dsPrice: (dcPrice = +dto.sku_price * config.priceMult),
-          dsOfferPrice: +(dcPrice * config.discountMult).toFixed(2),
+          dsPrice,
+          dsOfferPrice,
         },
       };
     }),
