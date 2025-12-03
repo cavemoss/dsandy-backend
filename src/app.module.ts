@@ -73,7 +73,6 @@ import { TelegramModule } from './telegram/telegram.module';
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
-    //yo
     consumer.apply(SubdomainMiddleware).forRoutes(
       {
         path: '/admin/subdomain',
