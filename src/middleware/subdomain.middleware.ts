@@ -24,14 +24,9 @@ export class SubdomainMiddleware implements NestMiddleware {
     }
 
     const { hostname } = new URL(origin);
-    let subdomainName: string;
 
-    if (['localhost', '127.0.0.1'].includes(hostname)) {
-      subdomainName = process.env.DEV_SUBDOMAIN;
-    } else {
-      const ptr = hostname.split('.');
-      subdomainName = ptr.length === 3 ? ptr[0] : '';
-    }
+    const ptr = hostname.split('.');
+    const subdomainName = ptr.length > 1 ? ptr[0] : null;
 
     if (!subdomainName) {
       throw new HttpException('Subdomain name is missing', HttpStatus.BAD_REQUEST);

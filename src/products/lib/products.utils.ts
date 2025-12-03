@@ -52,6 +52,7 @@ export const mapAliProduct = (
           price: dto.sku_price,
           offerPrice: dto.offer_sale_price,
           offerBulkPrice: dto.offer_bulk_sale_price,
+
           dsPrice,
           dsOfferPrice,
         },

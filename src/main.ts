@@ -11,8 +11,8 @@ async function bootstrap() {
   app.enableCors({
     origin: (origin: string, callback: (...args: any[]) => void) => {
       const allowed = [
-        /^https:\/\/([a-z_-]+\.)*dsandy\.shop$/,
-        /^http:\/\/([a-z_-]+\.)*localhost:3000$/,
+        /^https:\/\/([a-z]+\.)*dsandy\.shop$/,
+        /^http:\/\/([a-z]+\.)*localhost:3000$/,
       ];
 
       if (!origin || allowed.some(regex => regex.test(origin))) {
