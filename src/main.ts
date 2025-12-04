@@ -1,3 +1,4 @@
+import { HttpException, HttpStatus } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import * as dayjs from 'dayjs';
 import * as timezone from 'dayjs/plugin/timezone';
@@ -18,7 +19,7 @@ async function bootstrap() {
       if (!origin || allowed.some(regex => regex.test(origin))) {
         callback(null, true);
       } else {
-        callback(new Error('Not allowed by CORS'));
+        callback(new HttpException('Not allowed by CORS', HttpStatus.FORBIDDEN));
       }
     },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',

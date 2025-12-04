@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import _ from 'lodash';
+import { random } from 'lodash';
 import { DProduct } from 'src/products/entities/dynamic-product.entity';
 import { ProductsService } from 'src/products/services/products.service';
 import { Repository } from 'typeorm';
@@ -82,7 +82,7 @@ export class AdminService {
       if (id) dProduct.id = id;
 
       if (subdomain.config.autoCalculateDiscountMult) {
-        dProduct.config.discountMult = _.random(0.8, 0.9, true);
+        dProduct.config.discountMult = random(0.8, 0.9, true);
       }
     });
 
