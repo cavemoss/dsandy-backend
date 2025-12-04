@@ -38,6 +38,9 @@ export const mapAliProduct = (
       const dsPrice = +(parseFloat(dto.sku_price) * config.priceMult).toFixed(2);
       const dsOfferPrice = +(dsPrice * config.discountMult).toFixed(2);
 
+      console.log(config);
+      console.log({ dsPrice, dsOfferPrice });
+
       return {
         id: idx + 1,
         image,
