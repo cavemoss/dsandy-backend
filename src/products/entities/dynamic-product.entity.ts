@@ -44,6 +44,6 @@ export class DProduct {
   @AfterLoad()
   protected afterLoad() {
     this.config.discountMult ??= 0.8;
-    this.config.discountMult ??= 1.2;
+    this.config.priceMult ??= 1.2;
   }
 }

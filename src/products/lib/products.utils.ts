@@ -37,9 +37,7 @@ export const mapAliProduct = (
 
       const dsPrice = +(parseFloat(dto.sku_price) * config.priceMult).toFixed(2);
       const dsOfferPrice = +(dsPrice * config.discountMult).toFixed(2);
-
-      console.log(config);
-      console.log({ dsPrice, dsOfferPrice });
+      const dsDiscount = `${((1 - config.priceMult) * 100).toFixed(0)}%`;
 
       return {
         id: idx + 1,
@@ -58,6 +56,7 @@ export const mapAliProduct = (
 
           dsPrice,
           dsOfferPrice,
+          dsDiscount,
         },
       };
     }),

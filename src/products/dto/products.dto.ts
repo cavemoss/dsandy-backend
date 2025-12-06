@@ -12,6 +12,7 @@ export class ProductSCU {
     offerBulkPrice: string;
     dsPrice: number;
     dsOfferPrice: number;
+    dsDiscount: string;
   };
   image: string;
 }
