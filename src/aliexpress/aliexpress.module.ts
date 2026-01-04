@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { AliexpressController } from './aliexpress.controller';
+import { AliexpressController } from './controllers/aliexpress.controller';
 import { AliAccessToken } from './entities/access-token.entity';
 import { AliexpressService } from './services/aliexpress.service';
 

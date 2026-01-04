@@ -1,7 +1,10 @@
+import { clamp } from 'lodash';
 import { Subdomain } from 'src/admin/entities/subdomain.entity';
 import { Order } from 'src/orders/entities/order.entity';
 import {
   AfterLoad,
+  BeforeInsert,
+  BeforeUpdate,
   Column,
   Entity,
   JoinColumn,
@@ -12,8 +15,8 @@ import {
 } from 'typeorm';
 
 export interface DProductConfig {
-  priceMult: number;
-  discountMult: number;
+  priceMult: Record<number, number>;
+  discountMult: Record<number, number>;
 }
 
 @Entity('dynamic_products')
@@ -41,9 +44,8 @@ export class DProduct {
   })
   subdomain?: Subdomain;
 
+  @BeforeInsert()
+  @BeforeUpdate()
   @AfterLoad()
-  protected afterLoad() {
-    this.config.discountMult ??= 0.8;
-    this.config.priceMult ??= 1.2;
-  }
+  protected verifyConfig() {}
 }

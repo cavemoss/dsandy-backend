@@ -1,24 +1,29 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { formatPrice } from 'lib/utils';
+import { handleError } from 'lib/utils';
 import { InjectBot } from 'nestjs-telegraf';
 import { AdminService } from 'src/admin/services/admin.service';
-import { OrdersService } from 'src/orders/services/orders.service';
+import { ConfigService } from 'src/config/config.service';
+import { LoggerService } from 'src/logger/logger.service';
+import { Order } from 'src/orders/entities/order.entity';
 import { Context, Telegraf } from 'telegraf';
+import { ParseMode } from 'telegraf/typings/core/types/typegram';
 import { SceneContext } from 'telegraf/typings/scenes';
+
+import { getErrorMessage, getNewOrderMessage, getUnpaidOrderMessage } from '../lib/telegram.utils';
 
 @Injectable()
 export class TelegramService {
   private readonly tgChatId: string;
 
   constructor(
-    @InjectBot() private readonly bot: Telegraf<Context>,
-    readonly configService: ConfigService,
+    private readonly logger: LoggerService,
 
-    private readonly ordersService: OrdersService,
+    @InjectBot() private readonly bot: Telegraf<Context>,
+    protected readonly config: ConfigService,
+
     private readonly adminService: AdminService,
   ) {
-    this.tgChatId = configService.get('TELEGRAM_CHAT_ID')!;
+    this.tgChatId = config.telegram.chatId;
   }
 
   async onStart(ctx: Context & SceneContext) {
@@ -53,36 +58,33 @@ export class TelegramService {
     delete ctx.session['enterTenantId'];
   }
 
-  async testMsg(msg: string) {
-    return this.bot.telegram.sendMessage(this.tgChatId, msg);
+  testMsg(message: string, parseMode: string) {
+    return this.bot.telegram.sendMessage(this.tgChatId, message, {
+      parse_mode: parseMode as ParseMode,
+    });
   }
 
-  async onNewOrder(orderId: number, tgChatId: number | null) {
+  onError(message: string, data?: object) {
+    return this.bot.telegram.sendMessage(this.tgChatId, getErrorMessage(message, data), {
+      parse_mode: 'HTML',
+    });
+  }
+
+  onNewOrder(order: Order, tgChatId: number | null) {
     if (!tgChatId) return;
 
-    const order = await this.ordersService.ordersRepo.findOneByOrFail({ id: orderId });
-
-    const { shippingInfo: si, contactInfo: ci, paymentInfo: pi } = order;
-
-    const price = formatPrice(pi.amount / 100, pi.currency);
-
-    const message = `There was a new order placed at subdomain <b>${order.subdomainName}</b> for <b>${price}</b>!
-
-<b>Address</b>: ${si.country} ${si.province} ${si.city} ${si.address} ${si.zipCode}
-
-<b>Name</b>: ${ci.firstName} ${ci.lastName}
-
-<b>Email</b>: ${ci.email}
-
-<b>Phone</b>: ${ci.phone}`;
-
-    return this.bot.telegram.sendMessage(tgChatId, message, { parse_mode: 'HTML' });
+    try {
+      return this.bot.telegram.sendMessage(tgChatId, getNewOrderMessage(order), {
+        parse_mode: 'HTML',
+      });
+    } catch (e) {
+      handleError(this.logger, e as Error);
+    }
   }
 
-  async sendUnpaidOrderMessage(orderId: number) {
-    const formattedId = `#${orderId.toString().padStart(5, '0')}`;
-    const message = `You have an unpaid order <b>${formattedId}</b> placed at Aliexpress!`;
-
-    return this.bot.telegram.sendMessage(this.tgChatId, message, { parse_mode: 'HTML' });
+  sendUnpaidOrderMessage(orderId: number) {
+    return this.bot.telegram.sendMessage(this.tgChatId, getUnpaidOrderMessage(orderId), {
+      parse_mode: 'HTML',
+    });
   }
 }

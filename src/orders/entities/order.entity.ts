@@ -10,6 +10,7 @@ import {
   ManyToMany,
   ManyToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 
 export enum OrderStatusEnum {
@@ -50,6 +51,19 @@ export interface OrderItemDTO {
   quantity: number;
 }
 
+export interface OrderMetadata {
+  profit: number;
+  products: {
+    [id: number]: {
+      name: string;
+      variants: {
+        attr: string;
+        quantity: number;
+      }[];
+    };
+  };
+}
+
 @Entity('orders')
 export class Order {
   @PrimaryGeneratedColumn()
@@ -84,6 +98,9 @@ export class Order {
   @Column('json')
   orderItems: OrderItemDTO[];
 
+  @Column('json')
+  metadata: OrderMetadata;
+
   @Column({
     type: 'bigint',
     nullable: true,
@@ -93,6 +110,9 @@ export class Order {
 
   @CreateDateColumn()
   createdAt: string;
+
+  @UpdateDateColumn()
+  updatedAt: string;
 
   @ManyToMany(() => DProduct, p => p.orders, { cascade: true, eager: true })
   @JoinTable({ name: 'orders_dynamic_products' })

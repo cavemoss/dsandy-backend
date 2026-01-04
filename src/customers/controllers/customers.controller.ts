@@ -17,11 +17,7 @@ export class CustomersController {
   }
 
   @Patch()
-  patch(
-    @GetSubdomain() subdomain: string,
-    @Headers('x-customer-id') customerId: string,
-    @Body() body: Partial<Customer>,
-  ) {
+  update(@Headers('x-customer-id') customerId: string, @Body() body: Partial<Customer>) {
     return this.service.patch(+customerId, body);
   }
 

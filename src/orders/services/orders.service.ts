@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
+import { handleError } from 'lib/utils';
 import { AliexpressService } from 'src/aliexpress/services/aliexpress.service';
+import { LoggerService } from 'src/logger/logger.service';
 import { ProductsService } from 'src/products/services/products.service';
-import { Repository } from 'typeorm';
+import { In, IsNull, Not, Repository } from 'typeorm';
 
 import { PlaceOrderBodyDTO, UpdateOrderInfoBodyDTO } from '../dto/orders.dto';
 import { Order, OrderStatusEnum } from '../entities/order.entity';
@@ -11,8 +13,10 @@ import { Order, OrderStatusEnum } from '../entities/order.entity';
 @Injectable()
 export class OrdersService {
   constructor(
+    private readonly logger: LoggerService,
+
     @InjectRepository(Order)
-    readonly ordersRepo: Repository<Order>,
+    readonly repo: Repository<Order>,
 
     private readonly productsService: ProductsService,
     private readonly aliexpressService: AliexpressService,
@@ -21,13 +25,13 @@ export class OrdersService {
   async place(
     subdomainName: string,
     customerId: number | null,
-    { contactInfo, shippingInfo, orderItems, paymentInfo }: PlaceOrderBodyDTO,
+    { contactInfo, shippingInfo, orderItems, paymentInfo, metadata }: PlaceOrderBodyDTO,
   ) {
     const dProducts = await this.productsService.getDProductsByIds(
       orderItems.map(item => item.dProductId),
     );
 
-    let order = this.ordersRepo.create({
+    const order = this.repo.create({
       subdomainName,
       customerId,
       contactInfo,
@@ -35,62 +39,84 @@ export class OrdersService {
       paymentInfo,
       orderItems,
       dProducts,
+      metadata,
     });
 
-    order = await this.ordersRepo.save(order);
-
-    const _20_MIN = 1000 * 60 * 10;
-
-    setTimeout(() => {
-      void this.ordersRepo.findOneBy({ id: order.id }).then(order => {
-        if (order?.id && order?.status === OrderStatusEnum.PENDING) {
-          void this.ordersRepo.delete({ id: order.id });
-        }
-      });
-    }, _20_MIN);
-
-    return order;
+    return this.repo.save(order);
   }
 
   async deletePendingOrders() {
     const now = dayjs();
 
-    const orders = await this.ordersRepo.find({
+    const orders = await this.repo.find({
       select: ['id', 'createdAt'],
       where: { status: OrderStatusEnum.PENDING },
     });
 
     const orderIds = orders
       .filter(order => dayjs(order.createdAt).add(20, 'minutes').isBefore(now))
-      .map(order => order.id);
+      .map(({ id }) => id);
 
     if (orderIds.length) {
-      await this.ordersRepo.delete(orderIds);
+      await this.repo.delete(orderIds);
     }
   }
 
   async placeOrderAtAliexpress(orderId: number) {
-    const order = await this.ordersRepo.findOneByOrFail({ id: orderId });
+    try {
+      const order = await this.repo.findOneByOrFail({ id: orderId });
 
-    const result = await this.aliexpressService.orderCreatePay(order);
-    const aliOrderId = result.order_list.number[0];
+      const result = await this.aliexpressService.orderCreatePay(order);
+      const aliOrderId = result.order_list.number[0];
 
-    return this.ordersRepo.update(orderId, { aliOrderId, status: OrderStatusEnum.PLACED });
+      await this.repo.update(orderId, {
+        aliOrderId,
+        status: OrderStatusEnum.PLACED,
+      });
+    } catch (e) {
+      handleError(this.logger, e as Error, {
+        NO_ORDER_ITEMS: 'No order items',
+        ALI_PLACE_ORDER_FAILED: 'Aliexpress place order request failed',
+        ALI_PLACE_ORDER_NO_PROVINCE: 'Failed to parse province',
+        ALI_PLACE_ORDER_NO_PHONE: 'Failed to parse phone number',
+        ALI_REFRESH_TOKEN_ERROR: 'Failed to refresh access token',
+        ALI_METHOD_CALL_FAILED: 'Aliexpress method call failed',
+      });
+    }
+  }
+
+  async deleteOrderIfPending(orderId: number) {
+    const mustDelete = await this.repo.existsBy({
+      id: orderId,
+      status: OrderStatusEnum.PENDING,
+    });
+
+    if (mustDelete) {
+      await this.repo.delete(orderId);
+    }
   }
 
   getUnpaidOrders() {
-    return this.ordersRepo.findBy({ status: OrderStatusEnum.PLACED });
+    return this.repo.findBy({ status: OrderStatusEnum.PLACED });
   }
 
   updateOrderStatus(orderId: number, status: OrderStatusEnum) {
-    return this.ordersRepo.update(orderId, { status });
+    return this.repo.update(orderId, { status });
   }
 
   updateOrderInfo({ orderId, ...dto }: UpdateOrderInfoBodyDTO) {
-    return this.ordersRepo.update(orderId, dto);
+    return this.repo.update(orderId, dto);
   }
 
   getByCustomer(customerId: number) {
-    return this.ordersRepo.findBy({ customerId });
+    return this.repo.findBy({ customerId, status: Not(OrderStatusEnum.PENDING) });
+  }
+
+  getAnon(ids: number[]) {
+    return this.repo.findBy({
+      id: In(ids),
+      status: Not(OrderStatusEnum.PENDING),
+      customerId: IsNull(),
+    });
   }
 }

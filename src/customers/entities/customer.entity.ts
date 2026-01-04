@@ -1,5 +1,5 @@
-import * as bcrypt from 'bcrypt';
 import { Subdomain } from 'src/admin/entities/subdomain.entity';
+import { encryptPassword } from 'src/auth/lib/auth.utils';
 import { Order } from 'src/orders/entities/order.entity';
 import {
   BeforeInsert,
@@ -54,7 +54,6 @@ export class Customer {
 
   @BeforeInsert()
   protected async before() {
-    const salt = await bcrypt.genSalt();
-    this.password = await bcrypt.hash(this.password, salt);
+    this.password = await encryptPassword(this.password);
   }
 }

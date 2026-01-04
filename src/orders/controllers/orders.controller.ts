@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { GetSubdomain } from 'src/middleware/get-subdomain.decorator';
 
@@ -19,7 +19,7 @@ export class OrdersController {
   }
 
   @Patch()
-  updateOrderInfo(@Body() body: UpdateOrderInfoBodyDTO) {
+  update(@Body() body: UpdateOrderInfoBodyDTO) {
     return this.service.updateOrderInfo(body);
   }
 
@@ -27,5 +27,10 @@ export class OrdersController {
   @UseGuards(JwtAuthGuard)
   get(@Headers('x-customer-id') customerId: string) {
     return this.service.getByCustomer(+customerId);
+  }
+
+  @Get('anon')
+  getAnon(@Query('ids') orderIds: string) {
+    return this.service.getAnon(orderIds.split(';').map(Number));
   }
 }

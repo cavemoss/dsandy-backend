@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Query, UseGuards } from '@nestjs/common';
+import { Controller, Post, Query, UseGuards } from '@nestjs/common';
 import { PrivateApiGuard } from 'src/auth/guards/private-api.guard';
 
 import { TelegramService } from '../services/telegram.service';
@@ -8,8 +8,8 @@ import { TelegramService } from '../services/telegram.service';
 export class TelegramController {
   constructor(private readonly service: TelegramService) {}
 
-  @Post('test-msg')
-  testMsg(@Query('msg') msg: string) {
-    return this.service.testMsg(msg);
+  @Post('test')
+  testMsg(@Query('msg') msg: string, @Query('parseMode') parseMode: string) {
+    return this.service.testMsg(msg, parseMode);
   }
 }

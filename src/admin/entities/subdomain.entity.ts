@@ -49,7 +49,7 @@ export class Subdomain {
   @OneToMany(() => Order, p => p.subdomain, { onDelete: 'RESTRICT', eager: true })
   orders: Order[];
 
-  @OneToMany(() => Customer, p => p.subdomain, { onDelete: 'CASCADE', eager: true })
+  @OneToMany(() => Customer, p => p.subdomain, { onDelete: 'CASCADE' })
   customers: Customer[];
 
   @BeforeInsert()

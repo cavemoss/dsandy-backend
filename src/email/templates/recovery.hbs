@@ -1,0 +1,23 @@
+<html>
+  <head>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+      }
+      .button {
+        background-color: #007bff;
+        color: white;
+        padding: 10px 20px;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <p>Hi {{name}},</p>
+    <p>You requested a password reset for your account. Click the button below to reset it:</p>
+    <a href='{{resetLink}}' class='button'>Reset Password</a>
+    <p>If you didn't request this, please ignore this email.</p>
+    <p>This link expires in 1 hour.</p>
+    <p>Best,<br />Your App Team</p>
+  </body>
+</html>

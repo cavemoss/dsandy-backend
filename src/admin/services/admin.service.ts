@@ -80,10 +80,6 @@ export class AdminService {
         }) ?? {};
 
       if (id) dProduct.id = id;
-
-      if (subdomain.config.autoCalculateDiscountMult) {
-        dProduct.config.discountMult = random(0.8, 0.9, true);
-      }
     });
 
     subdomain.dProducts = this.productsService.dProductsRepo.create(dProducts);

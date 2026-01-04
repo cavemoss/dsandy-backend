@@ -1,6 +1,7 @@
+import { AliProductReviewsDTO } from 'src/aliexpress/dto/get-reviews.dto';
 import { AliProductInfoDTO } from 'src/aliexpress/dto/product-info.dto';
 
-import { Product } from '../dto/products.dto';
+import { Product, ProductReviews } from '../dto/products.dto';
 import { DProduct } from '../entities/dynamic-product.entity';
 
 export const mapAliProduct = (
@@ -27,6 +28,8 @@ export const mapAliProduct = (
     specifications: ptr.ae_item_properties.ae_item_property.map(p => [p.attr_name, p.attr_value]),
     descriptionHtml: ptr.ae_item_base_info_dto.detail,
     scus: ptr.ae_item_sku_info_dtos.ae_item_sku_info_d_t_o.map((dto, idx) => {
+      const id = idx + 1;
+
       const {
         sku_property_id: propertyId,
         property_value_id: propertyValueId,
@@ -35,12 +38,17 @@ export const mapAliProduct = (
         sku_image: image,
       } = dto.ae_sku_property_dtos.ae_sku_property_d_t_o[0];
 
-      const dsPrice = +(parseFloat(dto.sku_price) * config.priceMult).toFixed(2);
-      const dsOfferPrice = +(dsPrice * config.discountMult).toFixed(2);
-      const dsDiscount = `${((1 - config.priceMult) * 100).toFixed(0)}%`;
+      const priceMult = config.priceMult[id] ?? 1;
+      const discountMult = config.discountMult[id] ?? 1;
+
+      const dsPrice = +(parseFloat(dto.sku_price) * priceMult).toFixed(2);
+      const dsOfferPrice = +(dsPrice * discountMult).toFixed(2);
+
+      const discount = 1 - discountMult;
+      const dsDiscount = discount > 0 ? (discount * 100).toFixed(0) + '%' : null;
 
       return {
-        id: idx + 1,
+        id,
         image,
         aliScuId: dto.sku_id,
         propertyId,
@@ -58,6 +66,37 @@ export const mapAliProduct = (
           dsOfferPrice,
           dsDiscount,
         },
+      };
+    }),
+  };
+};
+
+export const mapAliProductReviews = (data: AliProductReviewsDTO['data']): ProductReviews => {
+  const { productEvaluationStatistic: ptr } = data;
+
+  return {
+    overview: {
+      count: data.totalNum,
+      rating: ptr.evarageStar,
+      stats: {
+        1: ptr.oneStarRate,
+        2: ptr.twoStarRate,
+        3: ptr.threeStarRate,
+        4: ptr.fourStarRate,
+        5: ptr.fiveStarRate,
+      },
+    },
+    list: data.evaViewList.map(el => {
+      const name = el.buyerName?.toLocaleLowerCase().includes('aliexpress')
+        ? 'Anonimous Buyer'
+        : el.buyerName;
+
+      return {
+        date: el.evalDate,
+        name,
+        rating: el.buyerEval / 20,
+        text: el.buyerTranslationFeedback,
+        images: el.thumbnails,
       };
     }),
   };

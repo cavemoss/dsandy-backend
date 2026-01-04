@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TelegrafModule } from 'nestjs-telegraf';
-import { OrdersModule } from 'src/orders/orders.module';
-import { session } from 'telegraf';
+import { ConfigModule } from 'src/config/config.module';
+import { ConfigService } from 'src/config/config.service';
 
 import { TelegramController } from './controllers/telegram.controller';
+import { TelegramRef } from './services/telegram.ref';
 import { TelegramService } from './services/telegram.service';
 import { TelegramUpdate } from './services/telegram.update';
 
@@ -12,16 +12,12 @@ import { TelegramUpdate } from './services/telegram.update';
   imports: [
     TelegrafModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (config: ConfigService) => ({
-        token: config.get('TELEGRAM_BOT_TOKEN')!,
-        middlewares: [session()],
-      }),
       inject: [ConfigService],
+      useFactory: (config: ConfigService) => config.telegram.settings,
     }),
-    OrdersModule,
   ],
   controllers: [TelegramController],
-  providers: [TelegramService, TelegramUpdate],
-  exports: [TelegramService],
+  providers: [TelegramService, TelegramUpdate, TelegramRef],
+  exports: [TelegramService, TelegramRef],
 })
 export class TelegramModule {}

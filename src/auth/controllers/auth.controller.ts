@@ -1,7 +1,7 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, Query } from '@nestjs/common';
 import { GetSubdomain } from 'src/middleware/get-subdomain.decorator';
 
-import { LoginDTO } from '../dto/auth.dto';
+import { LoginDTO, ResetPasswordDTO } from '../dto/auth.dto';
 import { AuthService } from '../services/auth.service';
 
 @Controller('auth')
@@ -16,5 +16,15 @@ export class AuthController {
   @Post('login-tenant')
   loginTenant(@Body() body: LoginDTO) {
     return this.service.loginTenant(body);
+  }
+
+  @Post('forgot-password')
+  forgotPassword(@GetSubdomain() subdomain: string, @Query('email') email: string) {
+    return this.service.forgotPassword(subdomain, decodeURIComponent(email));
+  }
+
+  @Post('reset-password')
+  resetPassword(@Body() body: ResetPasswordDTO) {
+    return this.service.resetPassword(body);
   }
 }

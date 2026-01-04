@@ -1,13 +1,14 @@
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import axios from 'axios';
 import { State } from 'country-state-city';
-import * as crypto from 'crypto';
-import * as dayjs from 'dayjs';
-import { objectByKey } from 'lib/utils';
+import crypto from 'crypto';
+import dayjs from 'dayjs';
+import { handleError, httpException, objectByKey } from 'lib/utils';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import { ClsService } from 'nestjs-cls';
+import { ConfigService } from 'src/config/config.service';
+import { LoggerService } from 'src/logger/logger.service';
 import { Order } from 'src/orders/entities/order.entity';
 import { DProduct } from 'src/products/entities/dynamic-product.entity';
 import { mapAliProduct } from 'src/products/lib/products.utils';
@@ -15,8 +16,10 @@ import { Repository } from 'typeorm';
 
 import { AliErrorResponseDTO } from '../dto/common.dto';
 import { AliDeliveryFreightDTO, AliDeliveryFreightRequestDTO } from '../dto/delivery-freight.dto';
+import { AliGetProductReviewsDTO, AliProductReviewsDTO } from '../dto/get-reviews.dto';
 import { AliAccessTokenDTO } from '../dto/oauth.dto';
 import { AliPlaceOrderRequestDTO, AliPlaceOrderResponseDTO } from '../dto/order-create-pay.dto';
+import { AliOrderTrackingRequestDTO, AliOrderTrackingResponseDTO } from '../dto/order-tracking';
 import { AliProductInfoDTO, AliProductInfoRequestDTO } from '../dto/product-info.dto';
 import { AliAccessToken } from '../entities/access-token.entity';
 
@@ -26,17 +29,16 @@ export class AliexpressService {
   private readonly appKey: string;
   private readonly appSecret: string;
 
-  private readonly logger = new Logger(AliexpressService.name);
-
   constructor(
+    private readonly logger: LoggerService,
+    protected readonly config: ConfigService,
     private readonly cls: ClsService,
-    private readonly configService: ConfigService,
 
     @InjectRepository(AliAccessToken)
     private readonly aliAccessTokenRepo: Repository<AliAccessToken>,
   ) {
-    this.appKey = this.configService.get('ALIEXPRESS_APP_KEY')!;
-    this.appSecret = this.configService.get('ALIEXPRESS_APP_SECRET')!;
+    this.appKey = config.aliexpress.appKey;
+    this.appSecret = config.aliexpress.secretKey;
   }
 
   private md5SignPayload(p: { [key: string]: string }): string {
@@ -65,6 +67,7 @@ export class AliexpressService {
   private callMethod(p: AliProductInfoRequestDTO): Promise<AliProductInfoDTO>;
   private callMethod(p: AliDeliveryFreightRequestDTO): Promise<AliDeliveryFreightDTO>;
   private callMethod(p: AliPlaceOrderRequestDTO): Promise<AliPlaceOrderResponseDTO>;
+  private callMethod(p: AliOrderTrackingRequestDTO): Promise<AliOrderTrackingResponseDTO>;
 
   private async callMethod<P extends { [key: string]: string }>(payload: P) {
     const commonParams = {
@@ -88,13 +91,12 @@ export class AliexpressService {
       })
       .then(res => res.data);
 
-    this.logger.log(`Call method ${payload.method}`, { result });
+    this.logger.info(`Call method ${payload.method}`, { result });
 
     if ('error_response' in result) {
-      throw new HttpException(
-        `${result.error_response.code}: ${result.error_response.msg}`,
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new Error('ALI_METHOD_CALL_FAILED', {
+        cause: `${result.error_response.code}: ${result.error_response.msg}`,
+      });
     }
 
     return result;
@@ -128,12 +130,14 @@ export class AliexpressService {
 
     this.sha256SignPayload(payload, '/auth/token/create');
 
+    this.logger.info('Ali get first access token', { payload });
+
     const result = await axios
       .get<AliAccessTokenDTO>(url, { params: new URLSearchParams(payload) })
       .then(res => res.data);
 
     if (result.code !== '0') {
-      throw new HttpException(result.message, HttpStatus.BAD_REQUEST);
+      throw httpException(this.logger, result.message);
     }
 
     const aliAccessToken = this.aliAccessTokenRepo.create({
@@ -167,8 +171,7 @@ export class AliexpressService {
       .then(res => res.data);
 
     if (result.code !== '0') {
-      this.logger.log('Refresh access token error', { result });
-      throw new HttpException(result.message, HttpStatus.BAD_REQUEST);
+      throw new Error('ALI_REFRESH_TOKEN_ERROR', { cause: result.message });
     }
 
     aliAccessToken = this.aliAccessTokenRepo.create({
@@ -200,32 +203,58 @@ export class AliexpressService {
   async getProductsByViewerParams(dp: DProduct) {
     const { country, currency, language } = this.cls.get('params');
 
-    const result = await this.callMethod({
-      method: 'aliexpress.ds.product.get',
-      product_id: dp.aliProductId,
-      ship_to_country: country,
-      target_currency: currency,
-      target_language: language,
-      remove_personal_benefit: false,
-      biz_model: 'biz_model',
-    });
+    try {
+      const result = await this.callMethod({
+        method: 'aliexpress.ds.product.get',
+        product_id: dp.aliProductId,
+        ship_to_country: country,
+        target_currency: currency,
+        target_language: language,
+        remove_personal_benefit: false,
+        biz_model: 'biz_model',
+      });
 
-    const { rsp_code, rsp_msg } = result.aliexpress_ds_product_get_response;
+      const { rsp_code, rsp_msg } = result.aliexpress_ds_product_get_response;
 
-    if (rsp_code !== 200) {
-      this.logger.error(`Error fetching aliexpress product: ${rsp_msg}`);
-      return null;
+      if (rsp_code !== 200) {
+        throw new Error('ALI_GET_PRODUCT_FAIL', { cause: rsp_msg });
+      }
+
+      return mapAliProduct(result, dp);
+    } catch (e) {
+      handleError(this.logger, e as Error, {
+        ALI_GET_PRODUCT_FAIL: {
+          message: `Error fetching product ${dp.aliProductId} from aliexpress`,
+          fatal: false,
+        },
+        ALI_REFRESH_TOKEN_ERROR: 'Failed to refresh access token',
+        ALI_METHOD_CALL_FAILED: 'Aliexpress method call failed',
+      });
     }
-
-    return mapAliProduct(result, dp);
   }
 
   async orderCreatePay(order: Order) {
+    if (!order.orderItems.length) {
+      throw new Error('NO_ORDER_ITEMS', { cause: { order } });
+    }
+
     const { shippingInfo: si, contactInfo: ci } = order;
 
-    const province = State.getStateByCodeAndCountry(si.province, si.country)!;
+    const province = State.getStateByCodeAndCountry(si.province, si.country);
 
-    const phone = parsePhoneNumberFromString(ci.phone)!;
+    if (!province) {
+      throw new Error('ALI_PLACE_ORDER_NO_PROVINCE', {
+        cause: { province, order },
+      });
+    }
+
+    const phone = parsePhoneNumberFromString(ci.phone);
+
+    if (!phone) {
+      throw new Error('ALI_PLACE_ORDER_NO_PHONE', {
+        cause: { phone, order },
+      });
+    }
 
     const contact = `${si.country} ${ci.firstName} ${ci.lastName}`;
 
@@ -262,10 +291,58 @@ export class AliexpressService {
     const { result } = response.aliexpress_ds_order_create_response;
 
     if (!result.is_success) {
-      this.logger.error(result.error_msg);
-      throw new HttpException(`AliexpressService: ${result.error_msg}`, HttpStatus.BAD_REQUEST);
+      throw new Error('ALI_PLACE_ORDER_FAILED', {
+        cause: { order, result },
+      });
     }
 
     return result;
+  }
+
+  async orderTracking(aliOrderId: number, lang: string) {
+    const response = await this.callMethod({
+      method: 'aliexpress.ds.order.tracking.get',
+      language: lang,
+      ae_order_id: aliOrderId,
+    });
+
+    const { result } = response.aliexpress_ds_order_tracking_get_response;
+
+    if (!result.ret) {
+      throw new Error('ALI_FAIL', { cause: result.msg });
+    }
+
+    return result.data.tracking_detail_line_list;
+  }
+
+  async getProductReviews(dto: AliGetProductReviewsDTO) {
+    const url = 'https://feedback.aliexpress.com/pc/searchEvaluation.do';
+
+    const { aliProductId: productId, page, pageSize } = dto;
+    const { language: lang, country } = this.cls.get('params');
+
+    const params = {
+      productId,
+      page,
+      pageSize,
+      lang,
+      country,
+      filter: 'all',
+      sort: 'complex_default',
+    };
+
+    const response = await axios.get<AliProductReviewsDTO>(url, { params });
+
+    const isSuccess: boolean =
+      (<string>response.headers['content-type'])?.startsWith('application/json') &&
+      !!response.data.data;
+
+    if (!isSuccess) {
+      throw new Error('ALI_FAIL', {
+        cause: response.data.antiCrawlerContent ?? 'Unknown',
+      });
+    }
+
+    return response.data;
   }
 }

@@ -1,5 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { AuthErrorEnum, AuthErrorResponseDTO } from 'src/auth/dto/auth.dto';
 import { Repository } from 'typeorm';
 
 import { CreateCustomerDTO } from '../dto/customers.dto';
@@ -12,7 +13,20 @@ export class CustomersService {
     readonly customersRepo: Repository<Customer>,
   ) {}
 
-  create(subdomainName: string, dto: CreateCustomerDTO) {
+  async create(subdomainName: string, dto: CreateCustomerDTO) {
+    const customerExist = await this.customersRepo.existsBy({
+      subdomainName,
+      email: dto.email,
+    });
+
+    if (customerExist) {
+      return {
+        errors: {
+          email: AuthErrorEnum.DUPLICATE,
+        },
+      } satisfies AuthErrorResponseDTO;
+    }
+
     const customer = this.customersRepo.create({
       email: dto.email,
       password: dto.password,
@@ -24,15 +38,19 @@ export class CustomersService {
     return this.customersRepo.save(customer);
   }
 
-  patch(id: number, dto: Partial<Customer>) {
-    return this.customersRepo.update({ id }, dto);
-  }
-
   getCredentials(subdomainName: string, email: string) {
     return this.customersRepo.findOne({
       where: { subdomainName, email },
       select: ['password', 'email', 'id'],
     });
+  }
+
+  patch(id: number, dto: Partial<Customer>) {
+    return this.customersRepo.update({ id }, dto);
+  }
+
+  get(subdomainName: string, email: string) {
+    return this.customersRepo.findOneBy({ subdomainName, email });
   }
 
   getById(id: number) {

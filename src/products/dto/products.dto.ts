@@ -1,4 +1,5 @@
 export class ProductSCU {
+  id: number;
   aliScuId: string;
   propertyId: number;
   propertyName: string;
@@ -12,7 +13,7 @@ export class ProductSCU {
     offerBulkPrice: string;
     dsPrice: number;
     dsOfferPrice: number;
-    dsDiscount: string;
+    dsDiscount: string | null;
   };
   image: string;
 }
@@ -35,4 +36,21 @@ export class Product {
   specifications: [string, string][];
   descriptionHtml: string;
   scus: ProductSCU[];
+}
+
+export interface ProductReviews {
+  overview: {
+    rating: number;
+    count: number;
+    stats: {
+      [K in 1 | 2 | 3 | 4 | 5]: number;
+    };
+  };
+  list: {
+    name: string;
+    date: string;
+    rating: number;
+    text: string;
+    images?: string[];
+  }[];
 }
