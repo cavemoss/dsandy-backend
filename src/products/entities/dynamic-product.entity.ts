@@ -1,10 +1,6 @@
-import { clamp } from 'lodash';
 import { Subdomain } from 'src/admin/entities/subdomain.entity';
 import { Order } from 'src/orders/entities/order.entity';
 import {
-  AfterLoad,
-  BeforeInsert,
-  BeforeUpdate,
   Column,
   Entity,
   JoinColumn,
@@ -43,9 +39,4 @@ export class DProduct {
     foreignKeyConstraintName: 'fk_dynamic_products_subdomain_name',
   })
   subdomain?: Subdomain;
-
-  @BeforeInsert()
-  @BeforeUpdate()
-  @AfterLoad()
-  protected verifyConfig() {}
 }

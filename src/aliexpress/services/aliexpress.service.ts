@@ -174,6 +174,8 @@ export class AliexpressService {
       throw new Error('ALI_REFRESH_TOKEN_ERROR', { cause: result.message });
     }
 
+    this.logger.info('Aliexpress access token refreshed', { result });
+
     aliAccessToken = this.aliAccessTokenRepo.create({
       accessToken: result.access_token,
       refreshToken: result.refresh_token,
