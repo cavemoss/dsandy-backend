@@ -96,7 +96,8 @@ export const mapAliProductReviews = (data: AliProductReviewsDTO['data']): Produc
         name,
         rating: el.buyerEval / 20,
         text: el.buyerTranslationFeedback,
-        images: el.thumbnails,
+        thumbnails: el.thumbnails,
+        images: el.images,
       };
     }),
   };

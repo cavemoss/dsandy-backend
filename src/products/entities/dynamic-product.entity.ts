@@ -11,8 +11,8 @@ import {
 } from 'typeorm';
 
 export interface DProductConfig {
-  priceMult: Record<number, number>;
-  discountMult: Record<number, number>;
+  priceMult: { [scuId: number]: number };
+  discountMult: { [scuId: number]: number };
 }
 
 @Entity('dynamic_products')
@@ -29,6 +29,9 @@ export class DProduct {
 
   @Column('json')
   config: DProductConfig;
+
+  @Column({ type: 'varchar', nullable: true, default: null })
+  tags: string | null;
 
   @ManyToMany(() => Order, o => o.dProducts)
   orders?: Order[];

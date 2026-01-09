@@ -51,6 +51,7 @@ export interface ProductReviews {
     date: string;
     rating: number;
     text: string;
+    thumbnails?: string[];
     images?: string[];
   }[];
 }
