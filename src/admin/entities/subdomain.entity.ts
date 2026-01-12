@@ -1,5 +1,7 @@
+import _ from 'lodash';
 import { Customer } from 'src/customers/entities/customer.entity';
 import { Order } from 'src/orders/entities/order.entity';
+import { DProductCategory } from 'src/products/entities/d-product-category.entity';
 import { DProduct } from 'src/products/entities/dynamic-product.entity';
 import {
   BeforeInsert,
@@ -28,6 +30,31 @@ export interface SubdomainConfig {
   autoCalculateDiscountMult: boolean;
 }
 
+type NavOptionConfig =
+  | {
+      type: 'catalog';
+      tags?: string[];
+    }
+  | {
+      type: 'blog';
+      blogId: number;
+    };
+
+export interface SubdomainNavigationConfig {
+  [url: string]: {
+    label: string;
+    subLabel: string;
+    config?: NavOptionConfig;
+    subOptions?: {
+      [url: string]: {
+        label: string;
+        subLabel: string;
+        config: NavOptionConfig;
+      };
+    };
+  };
+}
+
 @Entity('subdomains')
 export class Subdomain {
   @PrimaryColumn({ type: 'varchar', unique: true })
@@ -39,12 +66,22 @@ export class Subdomain {
   @Column('json')
   config: SubdomainConfig;
 
+  @Column('json')
+  navigation: SubdomainNavigationConfig;
+
   @ManyToOne(() => Tenant, t => t.subdomains)
   @JoinColumn({ name: 'tenant_id', foreignKeyConstraintName: 'fk_subdomains_tenant_id' })
   tenant: Tenant;
 
   @OneToMany(() => DProduct, p => p.subdomain, { onDelete: 'CASCADE', eager: true, cascade: true })
   dProducts: DProduct[];
+
+  @OneToMany(() => DProductCategory, p => p.subdomain, {
+    onDelete: 'CASCADE',
+    eager: true,
+    cascade: true,
+  })
+  dProductCategories: DProductCategory[];
 
   @OneToMany(() => Order, p => p.subdomain, { onDelete: 'RESTRICT', eager: true })
   orders: Order[];
@@ -55,5 +92,12 @@ export class Subdomain {
   @BeforeInsert()
   protected before() {
     this.name = this.name.toLowerCase();
+    this.navigation ??= {
+      catalog: {
+        label: 'Product Catalog',
+        subLabel: "Look at what we've got in store for you",
+        config: { type: 'catalog' },
+      },
+    };
   }
 }

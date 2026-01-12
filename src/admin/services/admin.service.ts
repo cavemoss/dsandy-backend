@@ -1,11 +1,15 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { random } from 'lodash';
+import { objectByKey } from 'lib/utils';
 import { DProduct } from 'src/products/entities/dynamic-product.entity';
 import { ProductsService } from 'src/products/services/products.service';
-import { Repository } from 'typeorm';
+import { DeepPartial, Repository } from 'typeorm';
 
-import { AdminCreateTenantDTO, AdminSaveDProductsDTO } from '../dto/admin.dto';
+import {
+  AdminCreateTenantDTO,
+  AdminSaveDProductCategoriesDTO,
+  AdminSaveDProductsDTO,
+} from '../dto/admin.dto';
 import { Subdomain, SubdomainConfig } from '../entities/subdomain.entity';
 import { Tenant } from '../entities/tenant.entity';
 
@@ -70,16 +74,26 @@ export class AdminService {
     }
   }
 
+  async saveDProductCategories(
+    subdomainName: string,
+    { dProductCategories }: AdminSaveDProductCategoriesDTO,
+  ) {
+    const subdomain = await this.getSubdomain(subdomainName);
+    Object.assign(subdomain, { dProductCategories });
+    return this.subdomainsRepo.save(subdomain);
+  }
+
   async saveDProducts(subdomainName: string, { dProducts }: AdminSaveDProductsDTO) {
     const subdomain = await this.getSubdomain(subdomainName);
+    const prevDProducts = objectByKey(subdomain.dProducts, 'aliProductId');
 
-    dProducts.forEach((dProduct: DProduct) => {
-      const { id } =
-        subdomain.dProducts.find(({ aliProductId }) => {
-          return aliProductId === dProduct.aliProductId;
-        }) ?? {};
+    dProducts.forEach(dto => {
+      const ptr = dto as DeepPartial<DProduct>;
 
-      if (id) dProduct.id = id;
+      const { id } = prevDProducts[dto.aliProductId];
+
+      ptr.categories = dto.categoryIds?.map(id => ({ id }));
+      ptr.id = id;
     });
 
     subdomain.dProducts = this.productsService.dProductsRepo.create(dProducts);

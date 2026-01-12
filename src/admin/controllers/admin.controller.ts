@@ -3,7 +3,11 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { GetSubdomain } from 'src/middleware/get-subdomain.decorator';
 import { GetTenant } from 'src/middleware/get-tenant.decorator';
 
-import { AdminCreateTenantDTO, AdminSaveDProductsDTO } from '../dto/admin.dto';
+import {
+  AdminCreateTenantDTO,
+  AdminSaveDProductCategoriesDTO,
+  AdminSaveDProductsDTO,
+} from '../dto/admin.dto';
 import { Tenant } from '../entities/tenant.entity';
 import { AdminService } from '../services/admin.service';
 
@@ -25,6 +29,14 @@ export class AdminController {
   @UseGuards(JwtAuthGuard)
   getByJwtToken(@GetTenant() tenant: Tenant) {
     return this.service.validateTenant(tenant);
+  }
+
+  @Post('save-product-categories')
+  saveProductCategories(
+    @Headers('x-subdomain-name') subdomain: string,
+    @Body() body: AdminSaveDProductCategoriesDTO,
+  ) {
+    return this.service.saveDProductCategories(subdomain, body);
   }
 
   @Post('save-ali-products')

@@ -1,4 +1,6 @@
+import { DProductCategory } from 'src/products/entities/d-product-category.entity';
 import { DProduct } from 'src/products/entities/dynamic-product.entity';
+import { DeepPartial } from 'typeorm';
 
 export class AdminCreateTenantDTO {
   name: string;
@@ -11,5 +13,11 @@ export class AdminCreateTenantDTO {
 }
 
 export class AdminSaveDProductsDTO {
-  dProducts: Pick<DProduct, 'aliProductId' | 'config'>[];
+  dProducts: (Pick<DProduct, 'aliProductId' | 'config'> & {
+    categoryIds?: number[];
+  })[];
+}
+
+export class AdminSaveDProductCategoriesDTO {
+  dProductCategories: DeepPartial<DProductCategory>[];
 }

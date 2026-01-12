@@ -114,7 +114,7 @@ export class Order {
   @UpdateDateColumn()
   updatedAt: string;
 
-  @ManyToMany(() => DProduct, p => p.orders, { cascade: true, eager: true })
+  @ManyToMany(() => DProduct, p => p.orders, { cascade: ['remove'], eager: true })
   @JoinTable({ name: 'orders_dynamic_products' })
   dProducts: DProduct[];
 

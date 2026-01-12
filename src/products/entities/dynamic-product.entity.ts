@@ -4,11 +4,14 @@ import {
   Column,
   Entity,
   JoinColumn,
+  JoinTable,
   ManyToMany,
   ManyToOne,
   PrimaryGeneratedColumn,
   Unique,
 } from 'typeorm';
+
+import { DProductCategory } from './d-product-category.entity';
 
 export interface DProductConfig {
   priceMult: { [scuId: number]: number };
@@ -30,11 +33,12 @@ export class DProduct {
   @Column('json')
   config: DProductConfig;
 
-  @Column({ type: 'varchar', nullable: true, default: null })
-  tags: string | null;
-
   @ManyToMany(() => Order, o => o.dProducts)
   orders?: Order[];
+
+  @ManyToMany(() => DProductCategory, p => p.dProducts, { cascade: true })
+  @JoinTable({ name: 'dynamic_products_d_product_categories' })
+  categories?: DProductCategory[];
 
   @ManyToOne(() => Subdomain, s => s.dProducts, { orphanedRowAction: 'delete' })
   @JoinColumn({
