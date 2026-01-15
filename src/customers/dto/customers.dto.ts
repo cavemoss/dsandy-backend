@@ -8,3 +8,8 @@ export interface CreateCustomerDTO {
   info: CustomerInfoDTO;
   preferences: ViewerParams;
 }
+
+export interface UpdateCustomerInfoDTO {
+  info: CustomerInfoDTO;
+  email: string;
+}

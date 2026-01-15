@@ -12,6 +12,7 @@ import { LoggerService } from 'src/logger/logger.service';
 import { Order } from 'src/orders/entities/order.entity';
 import { DProduct } from 'src/products/entities/dynamic-product.entity';
 import { mapAliProduct } from 'src/products/lib/products.utils';
+import { CacheService } from 'src/redis/services/cache.service';
 import { Repository } from 'typeorm';
 
 import { AliErrorResponseDTO } from '../dto/common.dto';
@@ -36,6 +37,8 @@ export class AliexpressService {
 
     @InjectRepository(AliAccessToken)
     private readonly aliAccessTokenRepo: Repository<AliAccessToken>,
+
+    private readonly cacheService: CacheService,
   ) {
     this.appKey = config.aliexpress.appKey;
     this.appSecret = config.aliexpress.secretKey;
@@ -153,7 +156,12 @@ export class AliexpressService {
   async refreshAccessToken(aliAccessToken?: AliAccessToken) {
     const url = 'https://api-sg.aliexpress.com/rest/auth/token/refresh';
 
-    aliAccessToken ??= await this.aliAccessTokenRepo.findOneByOrFail({ id: 1 });
+    let mustCache = false;
+
+    if (!aliAccessToken) {
+      mustCache = true;
+      aliAccessToken = await this.aliAccessTokenRepo.findOneByOrFail({ id: 1 });
+    }
 
     const payload = {
       refresh_token: aliAccessToken.refreshToken,
@@ -183,20 +191,24 @@ export class AliexpressService {
       id: 1,
     });
 
+    if (mustCache) {
+      void this.cacheService.aliexpressAccessToken.set(aliAccessToken);
+    }
+
     return this.aliAccessTokenRepo.save(aliAccessToken);
   }
 
   private async getAccessToken(): Promise<string | null> {
-    let aliAccessToken = await this.aliAccessTokenRepo.findOneBy({ id: 1 });
+    let aliAccessToken = await this.cacheService.aliexpressAccessToken.get();
+    aliAccessToken ??= await this.aliAccessTokenRepo.findOneByOrFail({ id: 1 });
 
-    if (!aliAccessToken) return null;
+    const isTokenExpired = new Date().valueOf() - aliAccessToken.expireTime < 0;
 
-    const expireTime = dayjs(aliAccessToken.expireTime);
-
-    if (dayjs().tz('Asia/Shanghai').isAfter(expireTime)) {
+    if (isTokenExpired) {
       aliAccessToken = await this.refreshAccessToken(aliAccessToken);
     }
 
+    void this.cacheService.aliexpressAccessToken.set(aliAccessToken);
     return aliAccessToken.accessToken;
   }
 
@@ -215,6 +227,8 @@ export class AliexpressService {
         remove_personal_benefit: false,
         biz_model: 'biz_model',
       });
+
+      await new Promise(res => setTimeout(res, 1000));
 
       const { rsp_code, rsp_msg } = result.aliexpress_ds_product_get_response;
 

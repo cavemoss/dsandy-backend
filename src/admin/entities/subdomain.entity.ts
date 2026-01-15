@@ -33,7 +33,7 @@ export interface SubdomainConfig {
 type NavOptionConfig =
   | {
       type: 'catalog';
-      tags?: string[];
+      ids?: number[];
     }
   | {
       type: 'blog';

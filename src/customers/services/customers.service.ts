@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AuthErrorEnum, AuthErrorResponseDTO } from 'src/auth/dto/auth.dto';
 import { Repository } from 'typeorm';
 
-import { CreateCustomerDTO } from '../dto/customers.dto';
+import { CreateCustomerDTO, UpdateCustomerInfoDTO } from '../dto/customers.dto';
 import { Customer } from '../entities/customer.entity';
 
 @Injectable()

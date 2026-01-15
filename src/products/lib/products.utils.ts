@@ -6,7 +6,7 @@ import { DProduct } from '../entities/dynamic-product.entity';
 
 export const mapAliProduct = (
   p: AliProductInfoDTO,
-  { id, aliProductId, subdomainName, config }: DProduct,
+  { id, aliProductId, subdomainName, config, categories }: DProduct,
 ): Product => {
   const ptr = p.aliexpress_ds_product_get_response.result;
 
@@ -27,6 +27,7 @@ export const mapAliProduct = (
     },
     specifications: ptr.ae_item_properties.ae_item_property.map(p => [p.attr_name, p.attr_value]),
     descriptionHtml: ptr.ae_item_base_info_dto.detail,
+    categoryIds: categories?.map(c => c.id) ?? [],
     scus: ptr.ae_item_sku_info_dtos.ae_item_sku_info_d_t_o.map((dto, idx) => {
       const id = idx + 1;
 

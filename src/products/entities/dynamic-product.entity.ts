@@ -36,7 +36,7 @@ export class DProduct {
   @ManyToMany(() => Order, o => o.dProducts)
   orders?: Order[];
 
-  @ManyToMany(() => DProductCategory, p => p.dProducts, { cascade: true })
+  @ManyToMany(() => DProductCategory, p => p.dProducts, { cascade: true, eager: true })
   @JoinTable({ name: 'dynamic_products_d_product_categories' })
   categories?: DProductCategory[];
 

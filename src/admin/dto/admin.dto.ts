@@ -1,6 +1,5 @@
 import { DProductCategory } from 'src/products/entities/d-product-category.entity';
 import { DProduct } from 'src/products/entities/dynamic-product.entity';
-import { DeepPartial } from 'typeorm';
 
 export class AdminCreateTenantDTO {
   name: string;
@@ -19,5 +18,7 @@ export class AdminSaveDProductsDTO {
 }
 
 export class AdminSaveDProductCategoriesDTO {
-  dProductCategories: DeepPartial<DProductCategory>[];
+  dProductCategories: (Partial<DProductCategory> & {
+    title: string;
+  })[];
 }

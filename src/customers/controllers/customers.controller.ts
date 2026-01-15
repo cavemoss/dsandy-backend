@@ -3,7 +3,7 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { GetCustomer } from 'src/middleware/get-customer.decorator';
 import { GetSubdomain } from 'src/middleware/get-subdomain.decorator';
 
-import { CreateCustomerDTO } from '../dto/customers.dto';
+import { CreateCustomerDTO, UpdateCustomerInfoDTO } from '../dto/customers.dto';
 import { Customer } from '../entities/customer.entity';
 import { CustomersService } from '../services/customers.service';
 

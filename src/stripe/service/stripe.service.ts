@@ -68,6 +68,8 @@ export class StripeService {
     });
 
     await this.ordersService.deleteOrderIfPending(+metadata.orderId);
+
+    this.logger.info('Abandoned payment canceled');
   }
 
   async handleWebhook(rowReqBody: Buffer, signature: string) {

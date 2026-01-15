@@ -67,7 +67,9 @@ export class AuthService {
     const customer = await this.customersService.get(subdomainName, email);
 
     if (!customer) {
-      throw new HttpException('Customer not found', HttpStatus.NOT_FOUND);
+      return {
+        errors: { email: AuthErrorEnum.NOT_FOUND },
+      };
     }
 
     const payload = { sub: customer.id, email };

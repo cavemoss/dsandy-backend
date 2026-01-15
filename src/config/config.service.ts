@@ -60,19 +60,21 @@ export const config = () => {
 
     mailer: {
       transport: {
-        host: 'smtp.example.com',
+        host: 'mail.hostedemail.com',
         port: 465,
-        secure: true,
+        secure: true, // Enforces TLS upgrade
         auth: {
           user: env.MAILER_USER,
           pass: env.MAILER_PASS,
         },
+        logger: true,
+        debug: true,
       },
       defaults: {
-        from: '"dsandy" <noreply@yourapp.com>',
+        from: '"dsandy" <noreply@dsandy.org>',
       },
       template: {
-        dir: join(__dirname, '..', 'templates'),
+        dir: join(__dirname, '../email', 'templates'),
         adapter: new HandlebarsAdapter(),
         options: { strict: true },
       },

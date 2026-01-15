@@ -8,6 +8,7 @@ import { LoggerService } from 'src/logger/logger.service';
 import { CacheService } from 'src/redis/services/cache.service';
 import { In, Repository } from 'typeorm';
 
+import { Product } from '../dto/products.dto';
 import { DProduct } from '../entities/dynamic-product.entity';
 import { mapAliProductReviews } from '../lib/products.utils';
 
@@ -29,12 +30,14 @@ export class ProductsService {
   }
 
   private async getProductsBySubdomainFromAli() {
-    const promises = this.cls
-      .get('subdomain.dProducts')
-      .map(dp => this.aliService.getProductsByViewerParams(dp));
+    const result: Product[] = [];
 
-    const products = await Promise.all(promises);
-    return products.filter(p => p != null);
+    for (const dProduct of this.cls.get('subdomain.dProducts')) {
+      const product = await this.aliService.getProductsByViewerParams(dProduct);
+      if (product) result.push(product);
+    }
+
+    return result;
   }
 
   async getProductsDynamic() {
