@@ -159,8 +159,8 @@ export class AliexpressService {
     let mustCache = false;
 
     if (!aliAccessToken) {
-      mustCache = true;
       aliAccessToken = await this.aliAccessTokenRepo.findOneByOrFail({ id: 1 });
+      mustCache = true;
     }
 
     const payload = {
@@ -202,10 +202,14 @@ export class AliexpressService {
     let aliAccessToken = await this.cacheService.aliexpressAccessToken.get();
     aliAccessToken ??= await this.aliAccessTokenRepo.findOneByOrFail({ id: 1 });
 
-    const isTokenExpired = new Date().valueOf() - aliAccessToken.expireTime < 0;
+    const isTokenExpired = new Date().valueOf() - aliAccessToken.expireTime > 0;
 
     if (isTokenExpired) {
       aliAccessToken = await this.refreshAccessToken(aliAccessToken);
+    }
+
+    if (!aliAccessToken) {
+      throw new Error('ALI_NO_ACCESS_TOKEN');
     }
 
     void this.cacheService.aliexpressAccessToken.set(aliAccessToken);
@@ -239,6 +243,7 @@ export class AliexpressService {
       return mapAliProduct(result, dp);
     } catch (e) {
       handleError(this.logger, e as Error, {
+        ALI_NO_ACCESS_TOKEN: 'Aliexpress access token is missing altogether',
         ALI_GET_PRODUCT_FAIL: {
           message: `Error fetching product ${dp.aliProductId} from aliexpress`,
           fatal: false,

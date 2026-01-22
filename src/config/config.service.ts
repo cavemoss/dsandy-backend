@@ -62,13 +62,12 @@ export const config = () => {
       transport: {
         host: 'mail.hostedemail.com',
         port: 465,
-        secure: true, // Enforces TLS upgrade
+        secure: true,
         auth: {
           user: env.MAILER_USER,
           pass: env.MAILER_PASS,
         },
         logger: true,
-        debug: true,
       },
       defaults: {
         from: '"dsandy" <noreply@dsandy.org>',

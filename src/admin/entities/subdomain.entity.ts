@@ -30,7 +30,7 @@ export interface SubdomainConfig {
   autoCalculateDiscountMult: boolean;
 }
 
-type NavOptionConfig =
+type NavigationOptionConfig =
   | {
       type: 'catalog';
       ids?: number[];
@@ -44,12 +44,12 @@ export interface SubdomainNavigationConfig {
   [url: string]: {
     label: string;
     subLabel: string;
-    config?: NavOptionConfig;
+    config?: NavigationOptionConfig;
     subOptions?: {
       [url: string]: {
         label: string;
         subLabel: string;
-        config: NavOptionConfig;
+        config: NavigationOptionConfig;
       };
     };
   };
