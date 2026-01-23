@@ -5,7 +5,7 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { MailerOptions } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { redisStore } from 'cache-manager-redis-store';
-import { WinstonModuleOptions } from 'nest-winston';
+import { utilities, WinstonModuleOptions } from 'nest-winston';
 import { join } from 'path';
 import Stripe from 'stripe';
 import { session } from 'telegraf';
@@ -89,7 +89,16 @@ export const config = () => {
           labels: { service: 'dsandy-backend' },
           format: winston.format.json(),
         }),
-        new winston.transports.Console(),
+        new winston.transports.Console({
+          format: winston.format.combine(
+            winston.format.timestamp({ format: 'YYYY/MM/DD HH:mm:ss' }),
+            utilities.format.nestLike('Winston', {
+              colors: true,
+              prettyPrint: false,
+              processId: false,
+            }),
+          ),
+        }),
       ],
     } satisfies WinstonModuleOptions,
 
