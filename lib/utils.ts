@@ -22,6 +22,8 @@ export const handleError = (
       | { message: string; fatal?: true; status?: HttpStatus };
   } = {},
 ) => {
+  if (!(e instanceof Error)) e = new Error(String(e));
+
   const error = {
     message: e.message,
     cause: e.cause,

@@ -4,6 +4,7 @@ import { handleError } from 'lib/utils';
 import { AliexpressService } from 'src/aliexpress/services/aliexpress.service';
 import { LoggerService } from 'src/logger/logger.service';
 import { OrdersService } from 'src/orders/services/orders.service';
+import { StripeService } from 'src/stripe/service/stripe.service';
 import { TelegramService } from 'src/telegram/services/telegram.service';
 
 @Injectable()
@@ -13,6 +14,7 @@ export class CronService {
     private readonly aliexpressService: AliexpressService,
     private readonly ordersService: OrdersService,
     private readonly telegramService: TelegramService,
+    private readonly stripeService: StripeService,
   ) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
@@ -36,4 +38,7 @@ export class CronService {
       });
     });
   }
+
+  @Cron(CronExpression.EVERY_HOUR)
+  async everyHour() {}
 }

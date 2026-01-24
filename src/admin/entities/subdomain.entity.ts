@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import { Customer } from 'src/customers/entities/customer.entity';
 import { Order } from 'src/orders/entities/order.entity';
 import { DProductCategory } from 'src/products/entities/d-product-category.entity';

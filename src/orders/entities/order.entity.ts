@@ -15,8 +15,8 @@ import {
 
 export enum OrderStatusEnum {
   PENDING,
-  PAYED,
-  PLACED,
+  CUSTOMER_PAYED,
+  PLACED_AT_ALI,
   TO_BE_SHIPPED,
   SHIPPED,
   COMPLEAT,

@@ -5,12 +5,12 @@ export class AliAccessToken {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar' })
+  @Column()
   refreshToken: string;
 
-  @Column({ type: 'varchar' })
+  @Column()
   accessToken: string;
 
-  @Column({ type: 'bigint' })
+  @Column('bigint')
   expireTime: number;
 }

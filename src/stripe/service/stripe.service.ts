@@ -69,7 +69,7 @@ export class StripeService {
 
     await this.ordersService.deleteOrderIfPending(+metadata.orderId);
 
-    this.logger.info('Abandoned payment canceled');
+    this.logger.info('Abandoned payment canceled', { paymentIntent });
   }
 
   async handleWebhook(rowReqBody: Buffer, signature: string) {
@@ -82,7 +82,7 @@ export class StripeService {
     const orderExists = await this.ordersService.repo.existsBy({ id: orderId });
 
     if (!orderExists) {
-      throw httpException(this.logger, `Handle webhook error: Order ${orderId} not found`);
+      throw httpException(this.logger, `Handle webhook error: Order ${orderId} not found`, {}, 410);
     }
 
     switch (event.type) {
@@ -91,14 +91,14 @@ export class StripeService {
         break;
 
       default:
-        console.log(`Unhandled event type ${event.type}`);
+        this.logger.warn(`Unhandled event type ${event.type}`, { event });
     }
 
     return httpResponse('received');
   }
 
   private async onPaymentIntentSucceeded(orderId: number, metadata: Stripe.Metadata) {
-    await this.ordersService.updateOrderStatus(orderId, OrderStatusEnum.PAYED);
+    await this.ordersService.updateOrderStatus(orderId, OrderStatusEnum.CUSTOMER_PAYED);
     await this.ordersService.placeOrderAtAliexpress(orderId);
 
     const order = await this.ordersService.repo.findOneByOrFail({

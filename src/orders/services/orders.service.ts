@@ -71,7 +71,7 @@ export class OrdersService {
 
       await this.repo.update(orderId, {
         aliOrderId,
-        status: OrderStatusEnum.PLACED,
+        status: OrderStatusEnum.PLACED_AT_ALI,
       });
     } catch (e) {
       handleError(this.logger, e as Error, {
@@ -97,7 +97,7 @@ export class OrdersService {
   }
 
   getUnpaidOrders() {
-    return this.repo.findBy({ status: OrderStatusEnum.PLACED });
+    return this.repo.findBy({ status: OrderStatusEnum.PLACED_AT_ALI });
   }
 
   updateOrderStatus(orderId: number, status: OrderStatusEnum) {
