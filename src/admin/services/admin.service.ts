@@ -90,10 +90,8 @@ export class AdminService {
     dProducts.forEach(dto => {
       const ptr = dto as DeepPartial<DProduct>;
 
-      const { id } = prevDProducts[dto.aliProductId];
-
       ptr.categories = dto.categoryIds?.map(id => ({ id }));
-      ptr.id = id;
+      ptr.id = prevDProducts[dto.aliProductId]?.id;
     });
 
     subdomain.dProducts = this.productsService.dProductsRepo.create(dProducts);

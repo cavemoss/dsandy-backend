@@ -24,7 +24,7 @@ export class DProduct {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column('varchar')
+  @Column()
   subdomainName: string;
 
   @Column('bigint')

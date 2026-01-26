@@ -94,8 +94,8 @@ export const config = () => {
             winston.format.timestamp({ format: 'YYYY/MM/DD HH:mm:ss' }),
             utilities.format.nestLike('Winston', {
               colors: true,
-              prettyPrint: false,
               processId: false,
+              prettyPrint: !env.IS_DEV,
             }),
           ),
         }),
