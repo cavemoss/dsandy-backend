@@ -47,7 +47,7 @@ export interface OrderPaymentInfoDTO {
 
 export interface OrderItemDTO {
   dProductId: number;
-  skuAttr: `${number}:${number}`;
+  skuAttr: string;
   quantity: number;
 }
 
@@ -57,7 +57,7 @@ export interface OrderMetadata {
     [id: number]: {
       name: string;
       variants: {
-        attr: string;
+        properties: string[];
         quantity: number;
       }[];
     };

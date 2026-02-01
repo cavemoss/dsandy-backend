@@ -17,9 +17,9 @@ export class TelegramService {
 
   constructor(
     private readonly logger: LoggerService,
+    protected readonly config: ConfigService,
 
     @InjectBot() private readonly bot: Telegraf<Context>,
-    protected readonly config: ConfigService,
 
     private readonly adminService: AdminService,
   ) {

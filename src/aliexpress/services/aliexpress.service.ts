@@ -9,6 +9,7 @@ import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import { ClsService } from 'nestjs-cls';
 import { ConfigService } from 'src/config/config.service';
 import { LoggerService } from 'src/logger/logger.service';
+import { ViewerParams } from 'src/middleware/subdomain.middleware';
 import { Order } from 'src/orders/entities/order.entity';
 import { DProduct } from 'src/products/entities/dynamic-product.entity';
 import { mapAliProduct } from 'src/products/lib/products.utils';
@@ -243,11 +244,17 @@ export class AliexpressService {
       return mapAliProduct(result, dp);
     } catch (e) {
       handleError(this.logger, e as Error, {
-        ALI_NO_ACCESS_TOKEN: 'Aliexpress access token is missing altogether',
         ALI_GET_PRODUCT_FAIL: {
           message: `Error fetching product ${dp.aliProductId} from aliexpress`,
           fatal: false,
         },
+        ALI_NO_SCUS: {
+          fatal: false,
+        },
+        ALI_SCU_COMBINATIONS_ERROR: {
+          fatal: false,
+        },
+        ALI_NO_ACCESS_TOKEN: 'Aliexpress access token is missing altogether',
         ALI_REFRESH_TOKEN_ERROR: 'Failed to refresh access token',
         ALI_METHOD_CALL_FAILED: 'Aliexpress method call failed',
       });
@@ -281,9 +288,11 @@ export class AliexpressService {
 
     const dProducts = objectByKey(order.dProducts, 'id');
 
+    let requestBody = {};
+
     const response = await this.callMethod({
       method: 'aliexpress.ds.order.create',
-      param_place_order_request4_open_api_d_t_o: {
+      param_place_order_request4_open_api_d_t_o: (requestBody = {
         logistics_address: {
           address: si.address,
           address2: si.address2,
@@ -306,21 +315,21 @@ export class AliexpressService {
             product_count: el.quantity,
           };
         }),
-      },
+      }),
     });
 
     const { result } = response.aliexpress_ds_order_create_response;
 
     if (!result.is_success) {
       throw new Error('ALI_PLACE_ORDER_FAILED', {
-        cause: { order, result },
+        cause: { order, result, requestBody },
       });
     }
 
     return result;
   }
 
-  async orderTracking(aliOrderId: number, lang: string) {
+  async orderTracking(aliOrderId: number, lang: string = 'en') {
     const response = await this.callMethod({
       method: 'aliexpress.ds.order.tracking.get',
       language: lang,
@@ -329,11 +338,16 @@ export class AliexpressService {
 
     const { result } = response.aliexpress_ds_order_tracking_get_response;
 
-    if (!result.ret) {
-      throw new Error('ALI_FAIL', { cause: result.msg });
+    if (result.ret) {
+      return result.data.tracking_detail_line_list;
     }
 
-    return result.data.tracking_detail_line_list;
+    if (result.code == '1001') {
+      this.logger.warn(`Ali order tracking data not found for ${aliOrderId}`, { result });
+      return;
+    }
+
+    throw new Error('ALI_FAIL', { cause: result });
   }
 
   async getProductReviews(dto: AliGetProductReviewsDTO) {
@@ -360,7 +374,7 @@ export class AliexpressService {
 
     if (!isSuccess) {
       throw new Error('ALI_FAIL', {
-        cause: response.data.antiCrawlerContent ?? 'Unknown',
+        cause: response.data.antiCrawlerContent ?? { response: response.data },
       });
     }
 

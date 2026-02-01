@@ -1,11 +1,19 @@
-export class ProductSCU {
+export interface ProductSCU {
   id: number;
-  aliScuId: string;
+
   propertyId: number;
   propertyName: string;
   propertyValueId: number;
   propertyValueName: string;
-  availableStock: number;
+
+  combinations: {
+    propertyId: number;
+    propertyName: string;
+    propertyValueId: number;
+    propertyValueName: string;
+  }[];
+  combinationString: string;
+
   priceInfo: {
     currency: string;
     price: string;
@@ -15,14 +23,17 @@ export class ProductSCU {
     dsOfferPrice: number;
     dsDiscount: string | null;
   };
+
+  availableStock: number;
   image: string;
 }
 
-export class Product {
+export interface Product {
   id: number;
   aliProductId: number;
   subdomainName: string;
-  name: string;
+  title: string | null;
+  aliName: string;
   logistics: {
     deliveryTime: number;
     shipTo: string;
@@ -36,10 +47,16 @@ export class Product {
   specifications: [string, string][];
   descriptionHtml: string;
   scus: ProductSCU[];
+  scuLayers: number;
   categoryIds: number[];
 }
 
 export interface ProductReviews {
+  pages: {
+    current: number;
+    total: number;
+    size: number;
+  };
   overview: {
     rating: number;
     count: number;
@@ -52,6 +69,7 @@ export interface ProductReviews {
     date: string;
     rating: number;
     text: string;
+    attr: string;
     thumbnails?: string[];
     images?: string[];
   }[];

@@ -34,4 +34,8 @@ export class CacheService {
       set: (aat: AliAccessToken) => this.cache.set(KEY, aat),
     };
   }
+
+  clearCache() {
+    return this.cache.clear();
+  }
 }

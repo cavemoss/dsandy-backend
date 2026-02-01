@@ -3,6 +3,7 @@ import { Global, Module } from '@nestjs/common';
 import { ConfigModule } from 'src/config/config.module';
 import { ConfigService } from 'src/config/config.service';
 
+import { RedisController } from './controllers/redis.controller';
 import { CacheService } from './services/cache.service';
 
 @Global()
@@ -14,6 +15,7 @@ import { CacheService } from './services/cache.service';
       useFactory: (config: ConfigService) => config.redis.settings,
     }),
   ],
+  controllers: [RedisController],
   providers: [CacheService],
   exports: [CacheService],
 })

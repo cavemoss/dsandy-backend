@@ -96,8 +96,36 @@ export class OrdersService {
     }
   }
 
-  getUnpaidOrders() {
-    return this.repo.findBy({ status: OrderStatusEnum.PLACED_AT_ALI });
+  async checkUnpaidOrders() {
+    const unpaidOrders = await this.repo.findBy({ status: OrderStatusEnum.PLACED_AT_ALI });
+
+    const stillUnpaidOrders: Order[] = [];
+
+    for (const order of unpaidOrders) {
+      await this.updateUnpaidOrderStatus(order).then(flag => {
+        if (!flag) stillUnpaidOrders.push(order);
+      });
+    }
+
+    return stillUnpaidOrders;
+  }
+
+  async updateUnpaidOrderStatus(order: Order) {
+    try {
+      const data = await this.aliexpressService.orderTracking(order.aliOrderId);
+
+      if (data) {
+        await this.updateOrderStatus(order.id, OrderStatusEnum.TO_BE_SHIPPED);
+        return true;
+      }
+    } catch (e) {
+      handleError(this.logger, e as Error, {
+        ALI_FAIL: {
+          message: 'Order tracking failed while trying to update unpaid order status',
+          fatal: false,
+        },
+      });
+    }
   }
 
   updateOrderStatus(orderId: number, status: OrderStatusEnum) {

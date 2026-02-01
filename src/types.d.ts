@@ -5,5 +5,6 @@ declare module 'nestjs-cls' {
   interface ClsStore {
     subdomain: Subdomain;
     params: ViewerParams;
+    cronJobId?: string;
   }
 }

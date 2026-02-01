@@ -10,7 +10,7 @@ export const getNewOrderMessage = (order: Order) => {
 
   const products = Object.values(metadata.products).map(el => {
     let result = `<b>${el.name.slice(0, 80) + '...'}</b>\n`;
-    el.variants.forEach(el => (result += `${el.quantity} of ${el.attr}\n`));
+    el.variants.forEach(el => (result += `(${el.quantity}x) ${el.properties.join('; ')}\n`));
     return result;
   });
 

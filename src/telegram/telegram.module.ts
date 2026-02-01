@@ -4,7 +4,6 @@ import { ConfigModule } from 'src/config/config.module';
 import { ConfigService } from 'src/config/config.service';
 
 import { TelegramController } from './controllers/telegram.controller';
-import { TelegramRef } from './services/telegram.ref';
 import { TelegramService } from './services/telegram.service';
 import { TelegramUpdate } from './services/telegram.update';
 
@@ -17,7 +16,7 @@ import { TelegramUpdate } from './services/telegram.update';
     }),
   ],
   controllers: [TelegramController],
-  providers: [TelegramService, TelegramUpdate, TelegramRef],
-  exports: [TelegramService, TelegramRef],
+  providers: [TelegramService, TelegramUpdate],
+  exports: [TelegramService],
 })
 export class TelegramModule {}

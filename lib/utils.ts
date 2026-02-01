@@ -18,7 +18,7 @@ export const handleError = (
   handlers: {
     [LABEL: string]:
       | string
-      | { message: string; fatal: false }
+      | { message?: string; fatal: false }
       | { message: string; fatal?: true; status?: HttpStatus };
   } = {},
 ) => {
@@ -31,10 +31,10 @@ export const handleError = (
     name: e.name,
   };
 
-  const handler = handlers[e.message];
+  const handler = handlers[error.message];
 
   if (!handler) {
-    logger.error('Unhandled', error);
+    logger.error('', error);
     throw new HttpException(error, 500);
   }
 
@@ -47,7 +47,7 @@ export const handleError = (
     status = 400;
     fatal = true;
   } else {
-    message = handler.message;
+    message = handler.message ?? '';
     status = ('status' in handler && handler.status) || 400;
     fatal = handler.fatal ?? true;
   }

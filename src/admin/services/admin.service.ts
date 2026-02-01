@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { objectByKey } from 'lib/utils';
 import { DProduct } from 'src/products/entities/dynamic-product.entity';
 import { ProductsService } from 'src/products/services/products.service';
+import { CacheService } from 'src/redis/services/cache.service';
 import { DeepPartial, Repository } from 'typeorm';
 
 import {
@@ -23,6 +24,7 @@ export class AdminService {
     readonly subdomainsRepo: Repository<Subdomain>,
 
     private readonly productsService: ProductsService,
+    private readonly cacheService: CacheService,
   ) {}
 
   async createTenant(dto: AdminCreateTenantDTO) {
@@ -93,6 +95,8 @@ export class AdminService {
       ptr.categories = dto.categoryIds?.map(id => ({ id }));
       ptr.id = prevDProducts[dto.aliProductId]?.id;
     });
+
+    void this.cacheService.clearCache();
 
     subdomain.dProducts = this.productsService.dProductsRepo.create(dProducts);
     return this.subdomainsRepo.save(subdomain);
