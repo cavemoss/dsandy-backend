@@ -1,3 +1,5 @@
+'use client';
+
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { objectByKey } from 'lib/utils';
@@ -30,9 +32,17 @@ export class AdminService {
   async createTenant(dto: AdminCreateTenantDTO) {
     const subdomainConfig: SubdomainConfig = {
       storeName: dto.subdomain.name,
-      autoCalculateDiscountMult: true,
+      description: dto.subdomain.description,
+      landingPage: '/page/catalog',
       countries: ['US', 'CA'],
-      logo: { fontBased: {} },
+      logo: {
+        fontBased: {},
+      },
+      policies: {
+        freeShippingCap: 20,
+        returnDays: 30,
+      },
+      service: dto.service,
     };
 
     const subdomain = this.subdomainsRepo.create({

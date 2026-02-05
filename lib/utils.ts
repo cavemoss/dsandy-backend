@@ -12,30 +12,43 @@ export const formatPrice = (amount: number, currency: string) =>
     maximumFractionDigits: 2,
   }).format(amount);
 
+export const serializeError = (error: any): Error => {
+  const e =
+    error instanceof Error
+      ? error
+      : typeof error == 'object'
+        ? new Error(JSON.stringify(error))
+        : new Error(String(error));
+  return {
+    message: e.message,
+    cause: e.cause,
+    stack: e.stack,
+    name: e.name,
+  };
+};
+
 export const handleError = (
   logger: LoggerService,
-  e: Error,
+  e: any,
   handlers: {
     [LABEL: string]:
       | string
       | { message?: string; fatal: false }
       | { message: string; fatal?: true; status?: HttpStatus };
   } = {},
+  defaultFatal = true,
 ) => {
-  if (!(e instanceof Error)) e = new Error(String(e));
-
-  const error = {
-    message: e.message,
-    cause: e.cause,
-    stack: e.stack,
-    name: e.name,
-  };
-
+  const error = serializeError(e);
   const handler = handlers[error.message];
 
   if (!handler) {
-    logger.error('', error);
-    throw new HttpException(error, 500);
+    if (defaultFatal) {
+      logger.error('', error);
+      throw new HttpException(error, 500);
+    } else {
+      logger.warn('', error);
+      return;
+    }
   }
 
   delete error.stack;
@@ -45,11 +58,11 @@ export const handleError = (
   if (typeof handler == 'string') {
     message = handler;
     status = 400;
-    fatal = true;
+    fatal = defaultFatal;
   } else {
     message = handler.message ?? '';
     status = ('status' in handler && handler.status) || 400;
-    fatal = handler.fatal ?? true;
+    fatal = handler.fatal ?? defaultFatal;
   }
 
   if (fatal) {

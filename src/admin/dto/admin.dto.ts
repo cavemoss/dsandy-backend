@@ -8,6 +8,12 @@ export class AdminCreateTenantDTO {
   subdomain: {
     name: string;
     uniqueName: string;
+    description: string;
+  };
+  service: {
+    email: string;
+    phone: string;
+    address: string;
   };
 }
 

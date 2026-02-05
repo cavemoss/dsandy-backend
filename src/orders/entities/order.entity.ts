@@ -64,6 +64,16 @@ export interface OrderMetadata {
   };
 }
 
+export interface OrderTrackingDTO {
+  stages: {
+    name: string;
+    description: string;
+    timestamp: number;
+  }[];
+  carrier: string;
+  deliveryDays: number;
+}
+
 @Entity('orders')
 export class Order {
   @PrimaryGeneratedColumn()
@@ -100,6 +110,13 @@ export class Order {
 
   @Column('json')
   metadata: OrderMetadata;
+
+  @Column({
+    type: 'json',
+    nullable: true,
+    default: null,
+  })
+  trackingData: OrderTrackingDTO | null;
 
   @Column({
     type: 'bigint',

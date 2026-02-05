@@ -8,7 +8,7 @@ import { ProductsService } from 'src/products/services/products.service';
 import { In, IsNull, Not, Repository } from 'typeorm';
 
 import { PlaceOrderBodyDTO, UpdateOrderInfoBodyDTO } from '../dto/orders.dto';
-import { Order, OrderStatusEnum } from '../entities/order.entity';
+import { Order, OrderStatusEnum, OrderTrackingDTO } from '../entities/order.entity';
 
 @Injectable()
 export class OrdersService {
@@ -112,10 +112,11 @@ export class OrdersService {
 
   async updateUnpaidOrderStatus(order: Order) {
     try {
-      const data = await this.aliexpressService.orderTracking(order.aliOrderId);
+      const trackingData = await this.aliexpressService.orderTracking(order.aliOrderId);
 
-      if (data) {
+      if (trackingData) {
         await this.updateOrderStatus(order.id, OrderStatusEnum.TO_BE_SHIPPED);
+        await this.repo.update(order.id, { trackingData });
         return true;
       }
     } catch (e) {
@@ -125,6 +126,26 @@ export class OrdersService {
           fatal: false,
         },
       });
+    }
+  }
+
+  async cronUpdateOrderTracking() {
+    const orders = await this.repo.findBy({ status: OrderStatusEnum.TO_BE_SHIPPED });
+
+    for (const order of orders) {
+      try {
+        const trackingData = await this.aliexpressService.orderTracking(order.aliOrderId);
+        await this.repo.update(order.aliOrderId, { trackingData });
+      } catch (error) {
+        handleError(
+          this.logger,
+          error,
+          {
+            ALI_FAIL: `Order tracking for ${order.aliOrderId} failed in cron`,
+          },
+          false,
+        );
+      }
     }
   }
 

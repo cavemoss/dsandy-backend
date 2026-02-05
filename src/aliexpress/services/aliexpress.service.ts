@@ -9,7 +9,6 @@ import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import { ClsService } from 'nestjs-cls';
 import { ConfigService } from 'src/config/config.service';
 import { LoggerService } from 'src/logger/logger.service';
-import { ViewerParams } from 'src/middleware/subdomain.middleware';
 import { Order } from 'src/orders/entities/order.entity';
 import { DProduct } from 'src/products/entities/dynamic-product.entity';
 import { mapAliProduct } from 'src/products/lib/products.utils';
@@ -24,6 +23,7 @@ import { AliPlaceOrderRequestDTO, AliPlaceOrderResponseDTO } from '../dto/order-
 import { AliOrderTrackingRequestDTO, AliOrderTrackingResponseDTO } from '../dto/order-tracking';
 import { AliProductInfoDTO, AliProductInfoRequestDTO } from '../dto/product-info.dto';
 import { AliAccessToken } from '../entities/access-token.entity';
+import { mapOrderTrackingData } from '../lib/aliexpress.utils';
 
 @Injectable()
 export class AliexpressService {
@@ -336,10 +336,14 @@ export class AliexpressService {
       ae_order_id: aliOrderId,
     });
 
+    this.logger.info(`Ali order tracking data for ${aliOrderId}`, { response });
+
+    await new Promise(res => setTimeout(res, 1000));
+
     const { result } = response.aliexpress_ds_order_tracking_get_response;
 
     if (result.ret) {
-      return result.data.tracking_detail_line_list;
+      return mapOrderTrackingData(response);
     }
 
     if (result.code == '1001') {

@@ -72,6 +72,8 @@ export class StripeService {
     this.logger.info('Abandoned payment canceled', { paymentIntent });
   }
 
+  async confirmPayment(confirmationToken: string) {}
+
   async handleWebhook(rowReqBody: Buffer, signature: string) {
     const event = this.stripe.webhooks.constructEvent(rowReqBody, signature, this.webhookSecret);
     const paymentIntent = <Stripe.PaymentIntent>event.data.object;

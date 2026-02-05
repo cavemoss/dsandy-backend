@@ -34,3 +34,35 @@ export const orderTrackingExp2 = {
     ],
   },
 };
+
+export const orderTrackingExp3 = {
+  ret: true,
+  msg: '',
+  code: '',
+  data: {
+    tracking_detail_line_list: {
+      tracking_detail: [
+        {
+          detail_node_list: {
+            detail_node: [
+              {
+                time_stamp: 1770194210868,
+                tracking_detail_desc: 'Your package is currently being prepared.',
+                tracking_name: 'Package in preparation',
+              },
+              {
+                time_stamp: 1770192487065,
+                tracking_detail_desc: 'Your order has been successfully created',
+                tracking_name: 'Order created',
+              },
+            ],
+          },
+          package_item_list: {},
+          carrier_name: 'AliExpress Selection Standard',
+          mail_no: '',
+          eta_time_stamps: 1771576610476,
+        },
+      ],
+    },
+  },
+};

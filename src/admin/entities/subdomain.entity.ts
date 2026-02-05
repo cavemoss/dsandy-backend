@@ -25,8 +25,18 @@ export interface SubdomainConfig {
       italic?: boolean;
     };
   };
+  description: string;
   countries: string[];
-  autoCalculateDiscountMult: boolean;
+  landingPage: string;
+  policies: {
+    freeShippingCap: number;
+    returnDays: number;
+  };
+  service: {
+    email: string;
+    phone: string;
+    address: string;
+  };
 }
 
 type NavigationOptionConfig =

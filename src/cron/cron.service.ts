@@ -39,4 +39,9 @@ export class CronService {
       });
     });
   }
+
+  @Cron(CronExpression.EVERY_HOUR)
+  async everyHour() {
+    await this.ordersService.cronUpdateOrderTracking();
+  }
 }
