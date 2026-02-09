@@ -11,7 +11,7 @@ import { ConfigService } from './config/config.service';
 import { CronModule } from './cron/cron.module';
 import { CustomersController } from './customers/controllers/customers.controller';
 import { CustomersModule } from './customers/customers.module';
-import { EmailModule } from './email/email.module';
+import { MailerModule } from './email/mailer.module';
 import { LoggerModule } from './logger/logger.module';
 import { LoggingMiddleware } from './middleware/logger.middleware';
 import { SubdomainMiddleware } from './middleware/subdomain.middleware';
@@ -43,7 +43,7 @@ import { TelegramModule } from './telegram/telegram.module';
     ConfigModule,
     LoggerModule,
     RedisModule,
-    EmailModule,
+    MailerModule,
     CronModule,
     StripeModule,
     AliexpressModule,

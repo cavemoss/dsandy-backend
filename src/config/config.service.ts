@@ -107,7 +107,7 @@ export const config = () => {
       frontendHost: env.FRONTEND_HOST,
       jwt: {
         secret: env.JWT_SECRET,
-        signOptions: { expiresIn: '1h' },
+        signOptions: { expiresIn: '24h' },
       } satisfies JwtModuleOptions,
     },
   };

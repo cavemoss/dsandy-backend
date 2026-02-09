@@ -4,7 +4,7 @@ import * as bcrypt from 'bcrypt';
 import { AdminService } from 'src/admin/services/admin.service';
 import { ConfigService } from 'src/config/config.service';
 import { CustomersService } from 'src/customers/services/customers.service';
-import { EmailService } from 'src/email/services/email.service';
+import { MailerService } from 'src/email/services/mailer.service';
 
 import { AuthErrorEnum, LoginDTO, LoginResponseDTO, ResetPasswordDTO } from '../dto/auth.dto';
 import { encryptPassword } from '../lib/auth.utils';
@@ -19,7 +19,7 @@ export class AuthService {
     private readonly customersService: CustomersService,
     private readonly adminService: AdminService,
     private readonly jwtService: JwtService,
-    private readonly emailService: EmailService,
+    private readonly emailService: MailerService,
   ) {
     this.frontHost = config.admin.frontendHost;
   }

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { httpException, httpResponse } from 'lib/utils';
 import { AdminService } from 'src/admin/services/admin.service';
 import { ConfigService } from 'src/config/config.service';
-import { EmailService } from 'src/email/services/email.service';
+import { MailerService } from 'src/email/services/mailer.service';
 import { LoggerService } from 'src/logger/logger.service';
 import { OrderStatusEnum } from 'src/orders/entities/order.entity';
 import { OrdersService } from 'src/orders/services/orders.service';
@@ -23,7 +23,7 @@ export class StripeService {
     private readonly ordersService: OrdersService,
     private readonly telegramService: TelegramService,
     private readonly adminService: AdminService,
-    private readonly emailService: EmailService,
+    private readonly emailService: MailerService,
   ) {
     this.stripe = config.stripe.client;
     this.webhookSecret = config.stripe.webhookSecret;

@@ -1,14 +1,14 @@
 import { Module } from '@nestjs/common';
-import { MailerModule } from '@nestjs-modules/mailer';
+import { MailerModule as NestJsMailerModule } from '@nestjs-modules/mailer';
 import { ConfigModule } from 'src/config/config.module';
 import { ConfigService } from 'src/config/config.service';
 import { OrdersModule } from 'src/orders/orders.module';
 
-import { EmailService } from './services/email.service';
+import { MailerService } from './services/mailer.service';
 
 @Module({
   imports: [
-    MailerModule.forRootAsync({
+    NestJsMailerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => config.mailer,
@@ -16,7 +16,7 @@ import { EmailService } from './services/email.service';
 
     OrdersModule,
   ],
-  providers: [EmailService],
-  exports: [EmailService],
+  providers: [MailerService],
+  exports: [MailerService],
 })
-export class EmailModule {}
+export class MailerModule {}
