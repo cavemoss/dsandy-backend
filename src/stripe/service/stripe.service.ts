@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { httpException, httpResponse } from 'lib/utils';
+import { handleError, httpException, httpResponse } from 'lib/utils';
 import { AdminService } from 'src/admin/services/admin.service';
 import { ConfigService } from 'src/config/config.service';
 import { MailerService } from 'src/email/services/mailer.service';
@@ -9,7 +9,11 @@ import { OrdersService } from 'src/orders/services/orders.service';
 import { TelegramService } from 'src/telegram/services/telegram.service';
 import Stripe from 'stripe';
 
-import { StripeCreatePaymentIntentDTO } from '../dto/stripe.dto';
+import {
+  StripeCreateConfirmIntentDTO,
+  StripeCreatePaymentIntentDTO,
+  StripePaymentIndentMetadata,
+} from '../dto/stripe.dto';
 import { getPaymentIntentId, PAYMENT_TIMEOUT } from '../lib/utils';
 
 @Injectable()
@@ -29,6 +33,47 @@ export class StripeService {
     this.webhookSecret = config.stripe.webhookSecret;
   }
 
+  async createConfirmIntent(dto: StripeCreateConfirmIntentDTO) {
+    await this.finalizeOrder(dto.metadata);
+
+    try {
+      const result = await this.stripe.paymentIntents.create({
+        automatic_payment_methods: { enabled: true },
+        return_url: dto.returnUrl,
+        amount: dto.amount,
+        currency: dto.currency,
+        metadata: dto.metadata,
+        confirm: true,
+        confirmation_token: dto.confirmationTokenId,
+      });
+
+      return {
+        clientSecret: result.client_secret,
+        paymentIntentId: result.id,
+        status: result.status,
+      };
+    } catch (error) {
+      handleError(this.logger, error);
+    }
+  }
+
+  private async finalizeOrder(metadata: StripePaymentIndentMetadata) {
+    const { orderId, tenantId } = metadata;
+    const orderExists = await this.ordersService.repo.existsBy({ id: orderId });
+
+    if (!orderExists) {
+      throw httpException(this.logger, `Order ${orderId} not found`, { metadata }, 410);
+    }
+
+    await this.ordersService.updateOrderStatus(orderId, OrderStatusEnum.CUSTOMER_PAYED);
+    //await this.ordersService.placeOrderAtAliexpress(orderId);
+
+    const order = await this.ordersService.repo.findOneByOrFail({ id: orderId });
+    const tenant = await this.adminService.tenantsRepo.findOneByOrFail({ id: tenantId });
+
+    await this.telegramService.onNewOrder(order, tenant.tgChatId);
+  }
+
   async createPaymentIntent(options: StripeCreatePaymentIntentDTO) {
     const result = await this.stripe.paymentIntents.create({
       automatic_payment_methods: {
@@ -44,6 +89,7 @@ export class StripeService {
     return {
       clientSecret: result.client_secret,
       paymentIntentId: result.id,
+      status: result.status,
     };
   }
 
@@ -72,8 +118,6 @@ export class StripeService {
     this.logger.info('Abandoned payment canceled', { paymentIntent });
   }
 
-  async confirmPayment(confirmationToken: string) {}
-
   async handleWebhook(rowReqBody: Buffer, signature: string) {
     const event = this.stripe.webhooks.constructEvent(rowReqBody, signature, this.webhookSecret);
     const paymentIntent = <Stripe.PaymentIntent>event.data.object;
@@ -89,8 +133,8 @@ export class StripeService {
 
     switch (event.type) {
       case 'payment_intent.succeeded':
-        await this.onPaymentIntentSucceeded(orderId, metadata);
         break;
+        await this.onPaymentIntentSucceeded(orderId, metadata);
 
       default:
         this.logger.warn(`Unhandled event type ${event.type}`, { event });

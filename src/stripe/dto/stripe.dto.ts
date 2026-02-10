@@ -10,3 +10,8 @@ export interface StripeCreatePaymentIntentDTO {
   currency: string;
   metadata: StripePaymentIndentMetadata;
 }
+
+export interface StripeCreateConfirmIntentDTO extends StripeCreatePaymentIntentDTO {
+  confirmationTokenId: string;
+  returnUrl: string;
+}

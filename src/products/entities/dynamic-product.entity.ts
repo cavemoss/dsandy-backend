@@ -15,8 +15,16 @@ import { DProductCategory } from './d-product-category.entity';
 
 export interface DProductConfig {
   title: string | null;
-  priceMult: { [scuId: number]: number };
-  discountMult: { [scuId: number]: number };
+  priceMult: {
+    general: number;
+  } & {
+    [scuId: number]: number;
+  };
+  discountMult: {
+    general: number | null;
+  } & {
+    [scuId: number]: number;
+  };
 }
 
 @Entity('dynamic_products')

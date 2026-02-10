@@ -73,19 +73,17 @@ export const mapAliProduct = (
         sku_image: image,
       } = ptr4[0];
 
-      const id = index + 1;
+      const scuId = index + 1;
 
-      const priceMult = config.priceMult[id] ?? 1;
-      const discountMult = config.discountMult[id] ?? 1;
+      const priceMult = config.priceMult[scuId] ?? config.discountMult.general ?? 1;
+      const discountMult = config.discountMult[scuId] ?? config.discountMult.general ?? 1;
 
-      const dsPrice = +(parseFloat(dto.sku_price) * priceMult).toFixed(2);
-      const dsOfferPrice = +(dsPrice * discountMult).toFixed(2);
-
-      const discount = 1 - discountMult;
-      const dsDiscount = discount > 0 ? (discount * 100).toFixed(0) + '%' : null;
+      const dsOfferPrice = +(parseFloat(dto.sku_price) * priceMult).toFixed(2);
+      const dsPrice = +(dsOfferPrice * discountMult).toFixed(2);
+      const dsDiscount = discountMult > 1 ? (discountMult * 100 - 100).toFixed(0) + '%' : null;
 
       return {
-        id,
+        id: scuId,
 
         propertyId,
         propertyValueId,

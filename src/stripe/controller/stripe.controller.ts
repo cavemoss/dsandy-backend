@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 
-import { StripeCreatePaymentIntentDTO } from '../dto/stripe.dto';
+import { StripeCreateConfirmIntentDTO, StripeCreatePaymentIntentDTO } from '../dto/stripe.dto';
 import { StripeService } from '../service/stripe.service';
 
 @Controller('stripe')
@@ -22,6 +22,11 @@ export class StripeController {
   @Get('retrieve-payment-intent')
   retrievePaymentIntent(@Query('clientSecret') clientSecret: string) {
     return this.service.retrievePaymentIntent(clientSecret);
+  }
+
+  @Post('create-confirm-intent')
+  createConfirmIntent(@Body() body: StripeCreateConfirmIntentDTO) {
+    return this.service.createConfirmIntent(body);
   }
 
   @Post('create-payment-intent')

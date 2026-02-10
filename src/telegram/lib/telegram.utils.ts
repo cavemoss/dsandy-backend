@@ -9,7 +9,7 @@ export const getNewOrderMessage = (order: Order) => {
   const profit = formatPrice(metadata.profit / 100, p.currency);
 
   const products = Object.values(metadata.products).map(el => {
-    let result = `<b>${el.name.slice(0, 80) + '...'}</b>\n`;
+    let result = `<b>${el.name.length > 80 ? el.name.slice(0, 80) + '...' : el.name}</b>\n`;
     el.variants.forEach(el => (result += `(${el.quantity}x) ${el.properties.join('; ')}\n`));
     return result;
   });
