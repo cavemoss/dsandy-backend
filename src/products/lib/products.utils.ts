@@ -75,12 +75,12 @@ export const mapAliProduct = (
 
       const scuId = index + 1;
 
-      const priceMult = config.priceMult[scuId] ?? config.discountMult.general ?? 1;
+      const priceMult = config.priceMult[scuId] ?? config.priceMult.general ?? 1;
       const discountMult = config.discountMult[scuId] ?? config.discountMult.general ?? 1;
 
       const dsOfferPrice = +(parseFloat(dto.sku_price) * priceMult).toFixed(2);
-      const dsPrice = +(dsOfferPrice * discountMult).toFixed(2);
-      const dsDiscount = discountMult > 1 ? (discountMult * 100 - 100).toFixed(0) + '%' : null;
+      const dsPrice = +(dsOfferPrice / discountMult).toFixed(2);
+      const dsDiscount = discountMult < 1 ? (100 - discountMult * 100).toFixed(0) + '%' : null;
 
       return {
         id: scuId,

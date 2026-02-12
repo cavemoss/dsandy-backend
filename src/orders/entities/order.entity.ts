@@ -21,6 +21,8 @@ export enum OrderStatusEnum {
   SHIPPED,
   COMPLEAT,
   REFUND_REQUESTED,
+  RETURN_REQUESTED,
+  ORDER_CANCELED,
 }
 
 export interface OrderShippingInfoDTO {
@@ -70,6 +72,7 @@ export interface OrderTrackingDTO {
     description: string;
     timestamp: number;
   }[];
+  isCompleat: boolean;
   carrier: string;
   deliveryDays: number;
 }
@@ -123,7 +126,14 @@ export class Order {
     nullable: true,
     default: null,
   })
-  aliOrderId: number;
+  aliOrderId: number | null;
+
+  @Column({
+    type: 'varchar',
+    nullable: true,
+    default: null,
+  })
+  stripePaymentIntentId: string | null;
 
   @CreateDateColumn()
   createdAt: string;

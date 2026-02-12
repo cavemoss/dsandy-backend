@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Headers, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { PrivateApiGuard } from 'src/auth/guards/private-api.guard';
 import { GetSubdomain } from 'src/middleware/get-subdomain.decorator';
 import { GetTenant } from 'src/middleware/get-tenant.decorator';
 
@@ -45,5 +46,11 @@ export class AdminController {
     @Body() body: AdminSaveDProductsDTO,
   ) {
     return this.service.saveDProducts(subdomain, body);
+  }
+
+  @Post('force-update-orders')
+  @UseGuards(PrivateApiGuard)
+  forceUpdateOrders() {
+    return this.service.forceUpdateOrders();
   }
 }

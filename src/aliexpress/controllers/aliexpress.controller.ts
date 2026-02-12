@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { handleError } from 'lib/utils';
 import { PrivateApiGuard } from 'src/auth/guards/private-api.guard';
 import { LoggerService } from 'src/logger/logger.service';
@@ -18,6 +18,12 @@ export class AliexpressController {
   @Get('auth-callback')
   getFirstAccessToken(@Query('code') code: string) {
     return this.service.getFirstAccessToken(code);
+  }
+
+  @Post('test-method/:method')
+  @UseGuards(PrivateApiGuard)
+  testMethod(@Param('method') method: string, @Body() dto: object) {
+    return this.service.testMethod({ method, ...dto });
   }
 
   @Get('order-tracking/:aliOrderId')

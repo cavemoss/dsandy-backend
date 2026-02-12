@@ -219,6 +219,14 @@ export class AliexpressService {
 
   // Utilization
 
+  async testMethod(dto: any) {
+    try {
+      return await this.callMethod(dto);
+    } catch (error) {
+      handleError(this.logger, error);
+    }
+  }
+
   async getProductsByViewerParams(dp: DProduct) {
     const { country, currency, language } = this.cls.get('params');
 

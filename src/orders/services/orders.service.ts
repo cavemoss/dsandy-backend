@@ -99,6 +99,8 @@ export class OrdersService {
   async checkUnpaidOrders() {
     const unpaidOrders = await this.repo.findBy({ status: OrderStatusEnum.PLACED_AT_ALI });
 
+    this.logger.info('Checking unpaid orders', { unpaidOrders });
+
     const stillUnpaidOrders: Order[] = [];
 
     for (const order of unpaidOrders) {
@@ -110,42 +112,71 @@ export class OrdersService {
     return stillUnpaidOrders;
   }
 
+  async updateOrderTrackingAll() {
+    const orders = await this.repo.findBy({ status: OrderStatusEnum.TO_BE_SHIPPED });
+
+    this.logger.info('Updating tracking info for all orders');
+
+    for (const order of orders) {
+      await this.updateOrderTracking(order);
+    }
+  }
+
   async updateUnpaidOrderStatus(order: Order) {
     try {
+      if (!order.aliOrderId) {
+        throw new Error('NO_ALI_ORDER_ID', {
+          cause: { order },
+        });
+      }
+
       const trackingData = await this.aliexpressService.orderTracking(order.aliOrderId);
 
       if (trackingData) {
         await this.updateOrderStatus(order.id, OrderStatusEnum.TO_BE_SHIPPED);
         await this.repo.update(order.id, { trackingData });
+
+        this.logger.info(`Order ${order.id} confirmed!`);
         return true;
       }
-    } catch (e) {
-      handleError(this.logger, e as Error, {
-        ALI_FAIL: {
-          message: 'Order tracking failed while trying to update unpaid order status',
-          fatal: false,
+
+      this.logger.warn(`Order ${order.id} is still unpaid at Aliexpress!`);
+    } catch (error) {
+      handleError(
+        this.logger,
+        error,
+        {
+          ALI_FAIL: 'Order tracking failed while trying to update unpaid order status',
+          NO_ALI_ORDER_ID: `Order ${order.id} has no aliOrderId`,
         },
-      });
+        false,
+      );
     }
   }
 
-  async cronUpdateOrderTracking() {
-    const orders = await this.repo.findBy({ status: OrderStatusEnum.TO_BE_SHIPPED });
-
-    for (const order of orders) {
-      try {
-        const trackingData = await this.aliexpressService.orderTracking(order.aliOrderId);
-        await this.repo.update(order.aliOrderId, { trackingData });
-      } catch (error) {
-        handleError(
-          this.logger,
-          error,
-          {
-            ALI_FAIL: `Order tracking for ${order.aliOrderId} failed in cron`,
-          },
-          false,
-        );
+  async updateOrderTracking(order: Order) {
+    try {
+      if (!order.aliOrderId) {
+        throw new Error('NO_ALI_ORDER_ID', {
+          cause: { order },
+        });
       }
+
+      const trackingData = await this.aliexpressService.orderTracking(order.aliOrderId);
+
+      if (trackingData) {
+        await this.repo.update(order.id, { trackingData });
+      }
+    } catch (error) {
+      handleError(
+        this.logger,
+        error,
+        {
+          ALI_FAIL: `Order tracking for ${order.aliOrderId} failed in cron`,
+          NO_ALI_ORDER_ID: `Order ${order.id} has no aliOrderId`,
+        },
+        false,
+      );
     }
   }
 

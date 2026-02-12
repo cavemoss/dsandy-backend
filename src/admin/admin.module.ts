@@ -1,5 +1,6 @@
 import { Global, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { OrdersModule } from 'src/orders/orders.module';
 import { ProductsModule } from 'src/products/products.module';
 
 import { AdminController } from './controllers/admin.controller';
@@ -9,7 +10,7 @@ import { AdminService } from './services/admin.service';
 
 @Global()
 @Module({
-  imports: [TypeOrmModule.forFeature([Subdomain, Tenant]), ProductsModule],
+  imports: [TypeOrmModule.forFeature([Subdomain, Tenant]), ProductsModule, OrdersModule],
   providers: [AdminService],
   controllers: [AdminController],
   exports: [AdminService],

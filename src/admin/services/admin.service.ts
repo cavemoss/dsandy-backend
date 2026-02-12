@@ -3,6 +3,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { objectByKey } from 'lib/utils';
+import { OrdersService } from 'src/orders/services/orders.service';
 import { DProduct } from 'src/products/entities/dynamic-product.entity';
 import { ProductsService } from 'src/products/services/products.service';
 import { CacheService } from 'src/redis/services/cache.service';
@@ -27,6 +28,7 @@ export class AdminService {
 
     private readonly productsService: ProductsService,
     private readonly cacheService: CacheService,
+    private readonly ordersService: OrdersService,
   ) {}
 
   async createTenant(dto: AdminCreateTenantDTO) {
@@ -110,5 +112,9 @@ export class AdminService {
 
     subdomain.dProducts = this.productsService.dProductsRepo.create(dProducts);
     return this.subdomainsRepo.save(subdomain);
+  }
+
+  async forceUpdateOrders() {
+    await this.ordersService.checkUnpaidOrders();
   }
 }

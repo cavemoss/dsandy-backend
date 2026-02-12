@@ -47,6 +47,10 @@ export class StripeService {
         confirmation_token: dto.confirmationTokenId,
       });
 
+      void this.ordersService.repo.update(dto.metadata.orderId, {
+        stripePaymentIntentId: result.id,
+      });
+
       return {
         clientSecret: result.client_secret,
         paymentIntentId: result.id,
@@ -66,7 +70,7 @@ export class StripeService {
     }
 
     await this.ordersService.updateOrderStatus(orderId, OrderStatusEnum.CUSTOMER_PAYED);
-    //await this.ordersService.placeOrderAtAliexpress(orderId);
+    await this.ordersService.placeOrderAtAliexpress(orderId);
 
     const order = await this.ordersService.repo.findOneByOrFail({ id: orderId });
     const tenant = await this.adminService.tenantsRepo.findOneByOrFail({ id: tenantId });
