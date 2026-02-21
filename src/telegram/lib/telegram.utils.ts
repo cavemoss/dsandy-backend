@@ -1,5 +1,18 @@
 import { formatPrice } from 'lib/utils';
 import { Order } from 'src/orders/entities/order.entity';
+import { ExtraReplyMessage } from 'telegraf/typings/telegram-types';
+
+export const getReplayParams = (order: Order) => {
+  const result: ExtraReplyMessage = {
+    parse_mode: 'HTML',
+  };
+  if (order.tgMessageId) {
+    result.reply_parameters = {
+      message_id: order.tgMessageId,
+    };
+  }
+  return result;
+};
 
 export const getNewOrderMessage = (order: Order) => {
   const { metadata, shippingInfo: s, contactInfo: c, paymentInfo: p } = order;
@@ -22,9 +35,13 @@ ${products.join('\n')}
 <b>Phone</b>: ${c.phone}`;
 };
 
-export const getUnpaidOrderMessage = (orderId: number) => {
-  const formattedId = `#${orderId.toString().padStart(5, '0')}`;
-  return `You have an unpaid order <code>${formattedId}</code> placed at Aliexpress!`;
+export const getUnpaidOrderMessage = (aliOrderId: number) => {
+  return `You have an unpaid order <code>${aliOrderId}</code> placed at Aliexpress!`;
+};
+
+export const getConfirmedReceiptMessage = (aliOrderId: number) => {
+  return `Congrats!
+Customer just confirmed receipt for order <code>${aliOrderId}</code>!`;
 };
 
 export const getErrorMessage = (message: string, data?: object) =>

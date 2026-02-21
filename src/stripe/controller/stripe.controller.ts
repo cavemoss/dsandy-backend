@@ -5,6 +5,7 @@ import {
   Headers,
   HttpCode,
   HttpStatus,
+  Param,
   Post,
   Query,
   RawBodyRequest,
@@ -27,6 +28,11 @@ export class StripeController {
   @Post('create-confirm-intent')
   createConfirmIntent(@Body() body: StripeCreateConfirmIntentDTO) {
     return this.service.createConfirmIntent(body);
+  }
+
+  @Post('cancel-order/:orderId')
+  cancelOrder(@Param('orderId') orderId: string, @Body('reason') reason: string) {
+    return this.service.cancelOrder(+orderId, reason);
   }
 
   @Post('create-payment-intent')

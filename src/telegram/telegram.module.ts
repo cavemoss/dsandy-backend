@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { TelegrafModule } from 'nestjs-telegraf';
 import { ConfigModule } from 'src/config/config.module';
 import { ConfigService } from 'src/config/config.service';
@@ -7,6 +7,7 @@ import { TelegramController } from './controllers/telegram.controller';
 import { TelegramService } from './services/telegram.service';
 import { TelegramUpdate } from './services/telegram.update';
 
+@Global()
 @Module({
   imports: [
     TelegrafModule.forRootAsync({

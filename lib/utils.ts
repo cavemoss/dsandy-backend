@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { LoggerService } from 'src/logger/logger.service';
 
-export const objectByKey = <T extends object>(array: T[], key: keyof T) =>
+export const indexByKey = <T extends object>(array: T[], key: keyof T) =>
   Object.fromEntries(array.map(obj => [obj[key], obj])) as Record<string, T>;
 
 export const formatPrice = (amount: number, currency: string) =>

@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Headers, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Headers,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { GetSubdomain } from 'src/middleware/get-subdomain.decorator';
 
@@ -16,6 +26,11 @@ export class OrdersController {
     @Body() body: PlaceOrderBodyDTO,
   ) {
     return this.service.place(subdomain, +customerId || null, body);
+  }
+
+  @Post('confirm/:orderId')
+  confirm(@Param('orderId') orderId: string) {
+    return this.service.setOrderComplete(+orderId);
   }
 
   @Patch()

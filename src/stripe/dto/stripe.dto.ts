@@ -15,3 +15,8 @@ export interface StripeCreateConfirmIntentDTO extends StripeCreatePaymentIntentD
   confirmationTokenId: string;
   returnUrl: string;
 }
+
+export interface StripeRefundRequestDTO {
+  orderId: number;
+  reason: string;
+}

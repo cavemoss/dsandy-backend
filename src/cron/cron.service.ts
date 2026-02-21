@@ -34,8 +34,8 @@ export class CronService {
   @Cron('0 */20 * * * *')
   async every20Min() {
     await this.ordersService.checkUnpaidOrders().then(orders => {
-      orders.forEach(({ id: orderId }) => {
-        void this.telegramService.sendUnpaidOrderMessage(orderId);
+      orders.forEach(order => {
+        void this.telegramService.sendUnpaidOrderMessage(order);
       });
     });
   }

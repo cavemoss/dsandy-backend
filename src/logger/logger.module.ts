@@ -14,7 +14,6 @@ import { LoggerService } from './logger.service';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => config.winston,
     }),
-    TelegramModule,
   ],
   providers: [LoggerService],
   exports: [LoggerService],

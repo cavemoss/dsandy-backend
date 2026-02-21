@@ -7,7 +7,7 @@ import { StripeController } from './controller/stripe.controller';
 import { StripeService } from './service/stripe.service';
 
 @Module({
-  imports: [OrdersModule, TelegramModule, MailerModule],
+  imports: [OrdersModule, MailerModule],
   controllers: [StripeController],
   providers: [StripeService],
   exports: [StripeService],

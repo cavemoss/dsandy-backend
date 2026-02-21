@@ -13,8 +13,8 @@ export const mapOrderTrackingData = (dto: AliOrderTrackingResponseDTO): OrderTra
       description: dto.tracking_detail_desc,
       timestamp: dto.time_stamp,
     })),
-    isCompleat: false,
     carrier: ptr.carrier_name,
+    trackingNumber: null,
     deliveryDays: 10,
   };
 };

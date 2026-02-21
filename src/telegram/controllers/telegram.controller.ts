@@ -3,7 +3,7 @@ import { PrivateApiGuard } from 'src/auth/guards/private-api.guard';
 
 import { TelegramService } from '../services/telegram.service';
 
-@Controller('telegram')
+@Controller('tg')
 @UseGuards(PrivateApiGuard)
 export class TelegramController {
   constructor(private readonly service: TelegramService) {}

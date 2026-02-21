@@ -1,6 +1,5 @@
-import { Body, Controller, Get, Headers, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { PrivateApiGuard } from 'src/auth/guards/private-api.guard';
 import { GetSubdomain } from 'src/middleware/get-subdomain.decorator';
 import { GetTenant } from 'src/middleware/get-tenant.decorator';
 
@@ -14,7 +13,7 @@ import { AdminService } from '../services/admin.service';
 
 @Controller('admin')
 export class AdminController {
-  constructor(public readonly service: AdminService) {}
+  constructor(private readonly service: AdminService) {}
 
   @Get('subdomain')
   getSubdomain(@GetSubdomain() subdomain: string) {
@@ -46,11 +45,5 @@ export class AdminController {
     @Body() body: AdminSaveDProductsDTO,
   ) {
     return this.service.saveDProducts(subdomain, body);
-  }
-
-  @Post('force-update-orders')
-  @UseGuards(PrivateApiGuard)
-  forceUpdateOrders() {
-    return this.service.forceUpdateOrders();
   }
 }

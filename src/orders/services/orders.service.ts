@@ -1,14 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import dayjs from 'dayjs';
-import { handleError } from 'lib/utils';
+import { handleError, httpException } from 'lib/utils';
+import { ClsService } from 'nestjs-cls';
 import { AliexpressService } from 'src/aliexpress/services/aliexpress.service';
 import { LoggerService } from 'src/logger/logger.service';
 import { ProductsService } from 'src/products/services/products.service';
+import { TelegramService } from 'src/telegram/services/telegram.service';
 import { In, IsNull, Not, Repository } from 'typeorm';
 
 import { PlaceOrderBodyDTO, UpdateOrderInfoBodyDTO } from '../dto/orders.dto';
-import { Order, OrderStatusEnum, OrderTrackingDTO } from '../entities/order.entity';
+import { Order, OrderStatusEnum } from '../entities/order.entity';
 
 @Injectable()
 export class OrdersService {
@@ -20,6 +22,7 @@ export class OrdersService {
 
     private readonly productsService: ProductsService,
     private readonly aliexpressService: AliexpressService,
+    private readonly telegramService: TelegramService,
   ) {}
 
   async place(
@@ -112,30 +115,19 @@ export class OrdersService {
     return stillUnpaidOrders;
   }
 
-  async updateOrderTrackingAll() {
-    const orders = await this.repo.findBy({ status: OrderStatusEnum.TO_BE_SHIPPED });
-
-    this.logger.info('Updating tracking info for all orders');
-
-    for (const order of orders) {
-      await this.updateOrderTracking(order);
-    }
-  }
-
   async updateUnpaidOrderStatus(order: Order) {
     try {
       if (!order.aliOrderId) {
-        throw new Error('NO_ALI_ORDER_ID', {
-          cause: { order },
-        });
+        throw new Error('NO_ALI_ORDER_ID', { cause: { order } });
       }
 
       const trackingData = await this.aliexpressService.orderTracking(order.aliOrderId);
 
       if (trackingData) {
-        await this.updateOrderStatus(order.id, OrderStatusEnum.TO_BE_SHIPPED);
-        await this.repo.update(order.id, { trackingData });
-
+        await this.repo.update(order.id, {
+          trackingData,
+          status: OrderStatusEnum.TO_BE_SHIPPED,
+        });
         this.logger.info(`Order ${order.id} confirmed!`);
         return true;
       }
@@ -154,6 +146,16 @@ export class OrdersService {
     }
   }
 
+  async updateOrderTrackingAll() {
+    const orders = await this.repo.findBy({ status: OrderStatusEnum.TO_BE_SHIPPED });
+
+    this.logger.info('Updating tracking info for all orders');
+
+    for (const order of orders) {
+      await this.updateOrderTracking(order);
+    }
+  }
+
   async updateOrderTracking(order: Order) {
     try {
       if (!order.aliOrderId) {
@@ -162,10 +164,17 @@ export class OrdersService {
         });
       }
 
+      if (!order.trackingData) {
+        throw new Error('NO_ORDER_TRACKING_DATA', {
+          cause: { order },
+        });
+      }
+
       const trackingData = await this.aliexpressService.orderTracking(order.aliOrderId);
 
       if (trackingData) {
-        await this.repo.update(order.id, { trackingData });
+        order.trackingData.stages = trackingData.stages;
+        await this.repo.save(order);
       }
     } catch (error) {
       handleError(
@@ -174,10 +183,77 @@ export class OrdersService {
         {
           ALI_FAIL: `Order tracking for ${order.aliOrderId} failed in cron`,
           NO_ALI_ORDER_ID: `Order ${order.id} has no aliOrderId`,
+          NO_ORDER_TRACKING_DATA: `Order ${order.id} does'nt have tracking data`,
         },
         false,
       );
     }
+  }
+
+  async setOrderShipped(aliOrderId: number) {
+    const order = await this.repo.findOneBy({ aliOrderId });
+
+    if (!order) {
+      throw httpException(this.logger, `Order ${aliOrderId} is gone`, {}, 410);
+    }
+
+    const { trackingData } = order;
+
+    if (!trackingData) {
+      throw httpException(this.logger, `Order ${order.id} has no tracking data`);
+    }
+
+    trackingData.stages.unshift({
+      name: 'Package Shipped',
+      description: 'Please confirm that you have received the package',
+      timestamp: new Date().valueOf(),
+    });
+
+    return this.repo.update(order.id, {
+      trackingData,
+      status: OrderStatusEnum.SHIPPED,
+    });
+  }
+
+  async setOrderComplete(orderId: number) {
+    try {
+      const order = await this.getById(orderId);
+
+      const { trackingData } = order;
+
+      if (!trackingData) {
+        throw new Error('NO_TRACKING_DATA');
+      }
+
+      if (order.status == OrderStatusEnum.COMPLETE) {
+        throw new Error('COMPLETE');
+      }
+
+      trackingData.stages.unshift({
+        name: 'Order Complete',
+        description: 'Thank you for your purchase!',
+        timestamp: new Date().valueOf(),
+      });
+
+      await this.repo.update(orderId, {
+        trackingData,
+        status: OrderStatusEnum.COMPLETE,
+      });
+
+      void this.telegramService.onConfirmOrderReceipt(order);
+    } catch (error) {
+      handleError(this.logger, error, {
+        GONE: `Order ${orderId} is gone`,
+        NO_TRACKING_DATA: `Order ${orderId} has no tracking data`,
+        COMPLETE: `Order ${orderId} is already complete`,
+      });
+    }
+  }
+
+  async getById(id: number) {
+    const order = await this.repo.findOneBy({ id });
+    if (!order) throw new Error('GONE');
+    return order;
   }
 
   updateOrderStatus(orderId: number, status: OrderStatusEnum) {

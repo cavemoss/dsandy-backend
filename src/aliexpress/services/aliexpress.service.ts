@@ -4,7 +4,7 @@ import axios from 'axios';
 import { State } from 'country-state-city';
 import crypto from 'crypto';
 import dayjs from 'dayjs';
-import { handleError, httpException, objectByKey } from 'lib/utils';
+import { handleError, httpException, indexByKey } from 'lib/utils';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import { ClsService } from 'nestjs-cls';
 import { ConfigService } from 'src/config/config.service';
@@ -294,7 +294,7 @@ export class AliexpressService {
 
     const contact = `${si.country} ${ci.firstName} ${ci.lastName}`;
 
-    const dProducts = objectByKey(order.dProducts, 'id');
+    const dProducts = indexByKey(order.dProducts, 'id');
 
     let requestBody = {};
 

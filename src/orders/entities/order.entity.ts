@@ -19,10 +19,10 @@ export enum OrderStatusEnum {
   PLACED_AT_ALI,
   TO_BE_SHIPPED,
   SHIPPED,
-  COMPLEAT,
+  COMPLETE,
   REFUND_REQUESTED,
   RETURN_REQUESTED,
-  ORDER_CANCELED,
+  CANCELED,
 }
 
 export interface OrderShippingInfoDTO {
@@ -72,10 +72,21 @@ export interface OrderTrackingDTO {
     description: string;
     timestamp: number;
   }[];
-  isCompleat: boolean;
+  trackingNumber: string | null;
   carrier: string;
   deliveryDays: number;
 }
+
+export type OrderCancelReason =
+  | 'changed_mind'
+  | 'found_better_price'
+  | 'duplicate_order'
+  | 'wrong_item'
+  | 'delivery_delay'
+  | 'payment_issue'
+  | 'shipping_cost'
+  | 'no_longer_needed'
+  | 'other';
 
 @Entity('orders')
 export class Order {
@@ -115,11 +126,18 @@ export class Order {
   metadata: OrderMetadata;
 
   @Column({
-    type: 'json',
+    type: 'jsonb',
     nullable: true,
     default: null,
   })
   trackingData: OrderTrackingDTO | null;
+
+  @Column({
+    type: 'varchar',
+    nullable: true,
+    default: null,
+  })
+  cancelReason: OrderCancelReason | null;
 
   @Column({
     type: 'bigint',
@@ -134,6 +152,13 @@ export class Order {
     default: null,
   })
   stripePaymentIntentId: string | null;
+
+  @Column({
+    type: 'int',
+    nullable: true,
+    default: null,
+  })
+  tgMessageId: number | null;
 
   @CreateDateColumn()
   createdAt: string;
