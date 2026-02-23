@@ -2,7 +2,8 @@
 
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { indexByKey } from 'lib/utils';
+import { handleError, httpException, indexByKey } from 'lib/utils';
+import { LoggerService } from 'src/logger/logger.service';
 import { DProduct } from 'src/products/entities/dynamic-product.entity';
 import { ProductsService } from 'src/products/services/products.service';
 import { CacheService } from 'src/redis/services/cache.service';
@@ -19,6 +20,8 @@ import { Tenant } from '../entities/tenant.entity';
 @Injectable()
 export class AdminService {
   constructor(
+    private readonly logger: LoggerService,
+
     @InjectRepository(Tenant)
     readonly tenantsRepo: Repository<Tenant>,
 
@@ -81,8 +84,9 @@ export class AdminService {
     try {
       return await this.subdomainsRepo.findOneByOrFail({ name });
     } catch (error) {
-      console.debug(error);
-      throw new HttpException(`Unknown subdomain ${name}`, HttpStatus.BAD_REQUEST);
+      throw httpException(this.logger, `Unknown subdomain ${name}`, {
+        error: error as object,
+      });
     }
   }
 
@@ -91,24 +95,34 @@ export class AdminService {
     { dProductCategories }: AdminSaveDProductCategoriesDTO,
   ) {
     const subdomain = await this.getSubdomain(subdomainName);
-    Object.assign(subdomain, { dProductCategories });
-    return this.subdomainsRepo.save(subdomain);
+
+    try {
+      Object.assign(subdomain, { dProductCategories });
+      return this.subdomainsRepo.save(subdomain);
+    } catch (error) {
+      handleError(this.logger, error);
+    }
   }
 
   async saveDProducts(subdomainName: string, { dProducts }: AdminSaveDProductsDTO) {
     const subdomain = await this.getSubdomain(subdomainName);
-    const prevDProducts = indexByKey(subdomain.dProducts, 'aliProductId');
 
-    dProducts.forEach(dto => {
-      const ptr = dto as DeepPartial<DProduct>;
+    try {
+      const prevDProducts = indexByKey(subdomain.dProducts, 'aliProductId');
 
-      ptr.categories = dto.categoryIds?.map(id => ({ id }));
-      ptr.id = prevDProducts[dto.aliProductId]?.id;
-    });
+      dProducts.forEach(dto => {
+        const ptr = dto as DeepPartial<DProduct>;
 
-    void this.cacheService.clearCache();
+        ptr.categories = dto.categoryIds?.map(id => ({ id }));
+        ptr.id = prevDProducts[dto.aliProductId]?.id;
+      });
 
-    subdomain.dProducts = this.productsService.dProductsRepo.create(dProducts);
-    return this.subdomainsRepo.save(subdomain);
+      void this.cacheService.clearCache();
+
+      subdomain.dProducts = this.productsService.dProductsRepo.create(dProducts);
+      return this.subdomainsRepo.save(subdomain);
+    } catch (error) {
+      handleError(this.logger, error);
+    }
   }
 }
