@@ -15,6 +15,7 @@ import { DProductCategory } from './d-product-category.entity';
 
 export interface DProductConfig {
   title: string | null;
+  isFewScus: boolean;
   priceMult: {
     general: number;
   } & {

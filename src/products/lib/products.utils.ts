@@ -1,3 +1,4 @@
+import { AliDeliveryFreightDTO } from 'src/aliexpress/dto/delivery-freight.dto';
 import { AliProductReviewsDTO } from 'src/aliexpress/dto/get-reviews.dto';
 import { AliProductInfoDTO } from 'src/aliexpress/dto/product-info.dto';
 
@@ -5,30 +6,16 @@ import { Product, ProductReviews } from '../dto/products.dto';
 import { DProduct } from '../entities/dynamic-product.entity';
 
 export const mapAliProduct = (
-  p: AliProductInfoDTO,
+  productInfo: AliProductInfoDTO,
+  logisticsInfo: AliDeliveryFreightDTO,
   { id, aliProductId, subdomainName, config, categories }: DProduct,
 ): Product => {
-  const ptr = p.aliexpress_ds_product_get_response.result;
-
+  const ptr = productInfo.aliexpress_ds_product_get_response.result;
   const ptr2 = ptr.ae_item_sku_info_dtos.ae_item_sku_info_d_t_o;
-
-  if (!ptr2.length) {
-    throw new Error('ALI_NO_SCUS');
-  }
+  const ptr3 = logisticsInfo.aliexpress_ds_freight_query_response.result;
 
   const scuLayers = ptr2[0].ae_sku_property_dtos.ae_sku_property_d_t_o.length;
-
-  if (scuLayers < 1) {
-    throw new Error('ALI_SCU_COMBINATIONS_ERROR');
-  }
-
-  for (let i = 1; i < ptr2.length; i++) {
-    const ptr3 = ptr2[i].ae_sku_property_dtos.ae_sku_property_d_t_o;
-
-    if (!ptr3 || !Array.isArray(ptr3) || ptr3.length !== scuLayers) {
-      throw new Error('ALI_SCU_COMBINATIONS_ERROR', { cause: ptr2 });
-    }
-  }
+  const maxDeliveryDays = ptr3.delivery_options.delivery_option_d_t_o[0].max_delivery_days;
 
   return {
     id,
@@ -37,7 +24,7 @@ export const mapAliProduct = (
     title: config.title ?? null,
     aliName: ptr.ae_item_base_info_dto.subject,
     logistics: {
-      deliveryTime: ptr.logistics_info_dto.delivery_time,
+      deliveryTime: maxDeliveryDays,
       shipTo: ptr.logistics_info_dto.ship_to_country,
     },
     images: ptr.ae_multimedia_info_dto.image_urls.split(';'),

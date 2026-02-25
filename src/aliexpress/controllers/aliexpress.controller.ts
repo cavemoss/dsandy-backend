@@ -12,7 +12,7 @@ export class AliexpressController {
     private readonly logger: LoggerService,
   ) {}
 
-  // admin: https://api-sg.aliexpress.com/oauth/authorize?response_type=code&force_auth=true&redirect_uri=https%3A%2F%2Fdsandy.cloudpub.ru%2Faliexpress%2Fauth-callback&client_id=521226
+  // admin: https://api-sg.aliexpress.com/oauth/authorize?response_type=code&force_auth=true&redirect_uri=https%3A%2F%2Fapi.dsandy.shop%2Faliexpress%2Fauth-callback&client_id=521226
   // support: https://api-sg.aliexpress.com/oauth/authorize?response_type=code&force_auth=true&redirect_uri=https%3A%2F%2Fdsandy.cloudpub.ru%2Faliexpress%2Fauth-callback&client_id=526966
 
   @Get('auth-callback')

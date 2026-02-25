@@ -4,15 +4,13 @@ import { AliCommonResponseDTO } from './common.dto';
 export interface AliDeliveryFreightRequestDTO {
   method: 'aliexpress.ds.freight.query';
   queryDeliveryReq: {
-    cityCode: string;
-    currency: string;
+    shipToCountry: string;
     language: string;
     locale: string;
+    currency: string;
     productId: number;
-    provinceCode: string;
-    quantity: number;
     selectedSkuId: string;
-    shipToCountry: string;
+    quantity: number;
   };
 }
 

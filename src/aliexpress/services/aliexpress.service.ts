@@ -23,7 +23,11 @@ import { AliPlaceOrderRequestDTO, AliPlaceOrderResponseDTO } from '../dto/order-
 import { AliOrderTrackingRequestDTO, AliOrderTrackingResponseDTO } from '../dto/order-tracking';
 import { AliProductInfoDTO, AliProductInfoRequestDTO } from '../dto/product-info.dto';
 import { AliAccessToken } from '../entities/access-token.entity';
-import { mapOrderTrackingData } from '../lib/aliexpress.utils';
+import {
+  mapOrderTrackingData,
+  verifyAliDeliveryLogisticsInfo,
+  verifyAliProductInfo,
+} from '../lib/aliexpress.utils';
 
 @Injectable()
 export class AliexpressService {
@@ -221,6 +225,7 @@ export class AliexpressService {
 
   async testMethod(dto: any) {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       return await this.callMethod(dto);
     } catch (error) {
       handleError(this.logger, error);
@@ -231,7 +236,7 @@ export class AliexpressService {
     const { country, currency, language } = this.cls.get('params');
 
     try {
-      const result = await this.callMethod({
+      const productInfo = await this.callMethod({
         method: 'aliexpress.ds.product.get',
         product_id: dp.aliProductId,
         ship_to_country: country,
@@ -241,19 +246,22 @@ export class AliexpressService {
         biz_model: 'biz_model',
       });
 
-      await new Promise(res => setTimeout(res, 1000));
+      verifyAliProductInfo(productInfo);
 
-      const { rsp_code, rsp_msg } = result.aliexpress_ds_product_get_response;
+      const logisticsInfo = await this.getProductDeliveryLogistics(productInfo, dp.aliProductId);
 
-      if (rsp_code !== 200) {
-        throw new Error('ALI_GET_PRODUCT_FAIL', { cause: rsp_msg });
-      }
-
-      return mapAliProduct(result, dp);
-    } catch (e) {
-      handleError(this.logger, e as Error, {
+      return mapAliProduct(productInfo, logisticsInfo, dp);
+    } catch (error) {
+      handleError(this.logger, error, {
         ALI_GET_PRODUCT_FAIL: {
           message: `Error fetching product ${dp.aliProductId} from aliexpress`,
+          fatal: false,
+        },
+        ALI_GET_LOGISTICS_FAIL: {
+          message: `Error fetching delivery logistics info for product ${dp.aliProductId} from aliexpress`,
+          fatal: false,
+        },
+        ALI_LOGISTICS_INFO_MALFORMED: {
           fatal: false,
         },
         ALI_NO_SCUS: {
@@ -267,6 +275,31 @@ export class AliexpressService {
         ALI_METHOD_CALL_FAILED: 'Aliexpress method call failed',
       });
     }
+  }
+
+  private async getProductDeliveryLogistics(dto: AliProductInfoDTO, aliProductId: number) {
+    const { country, currency, language } = this.cls.get('params');
+
+    const firstScuId =
+      dto.aliexpress_ds_product_get_response.result.ae_item_sku_info_dtos.ae_item_sku_info_d_t_o[0]
+        .sku_id;
+
+    const response = await this.callMethod({
+      method: 'aliexpress.ds.freight.query',
+      queryDeliveryReq: {
+        shipToCountry: country,
+        language: language,
+        locale: language,
+        currency: currency,
+        selectedSkuId: firstScuId,
+        productId: aliProductId,
+        quantity: 1,
+      },
+    });
+
+    verifyAliDeliveryLogisticsInfo(response);
+
+    return response;
   }
 
   async orderCreatePay(order: Order) {
