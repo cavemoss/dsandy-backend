@@ -52,10 +52,10 @@ export function verifyAliProductInfo(dto: AliProductInfoDTO) {
 }
 
 export function verifyAliDeliveryLogisticsInfo(dto: AliDeliveryFreightDTO) {
-  const { rsp_code, rsp_msg, result } = dto.aliexpress_ds_freight_query_response;
+  const { result } = dto.aliexpress_ds_freight_query_response;
 
-  if (rsp_code !== 200) {
-    throw new Error('ALI_GET_LOGISTICS_FAIL', { cause: rsp_msg });
+  if (result.code !== 200) {
+    throw new Error('ALI_GET_LOGISTICS_FAIL', { cause: result.msg });
   }
 
   const deliveryDays = +result?.delivery_options?.delivery_option_d_t_o?.[0]?.max_delivery_days;
